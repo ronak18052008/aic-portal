@@ -1,0 +1,808 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Resume & CV Builder | AIC PORTAL{% endblock %}
+
+{% block extra_head %}
+<style>
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    #resume-preview-canvas, #resume-preview-canvas * {
+        visibility: visible !important;
+    }
+    #resume-preview-canvas {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 24px !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6" x-data="resumeBuilder()">
+
+    <!-- Top Action Bar -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+        <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-black uppercase tracking-wider">
+                <i class="fa-solid fa-wand-magic-sparkles text-brand-600"></i>
+                AI Career Intelligence
+            </div>
+            <h1 class="text-2xl font-black text-slate-900">AI Resume & CV Studio</h1>
+            <p class="text-xs text-slate-500">Design high-impact, ATS-optimized CVs with verified credentials, custom photos, and modern styling.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Template Selector Buttons -->
+            <div class="inline-flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                <button type="button" @click="activeTemplate = 'modern'" :class="{ 'bg-white text-slate-900 shadow font-black': activeTemplate === 'modern', 'text-slate-600 font-bold': activeTemplate !== 'modern' }" class="px-3 py-1.5 rounded-xl text-xs transition-all">
+                    Modern Tech
+                </button>
+                <button type="button" @click="activeTemplate = 'executive'" :class="{ 'bg-white text-slate-900 shadow font-black': activeTemplate === 'executive', 'text-slate-600 font-bold': activeTemplate !== 'executive' }" class="px-3 py-1.5 rounded-xl text-xs transition-all">
+                    Executive
+                </button>
+                <button type="button" @click="activeTemplate = 'aurora'" :class="{ 'bg-white text-slate-900 shadow font-black': activeTemplate === 'aurora', 'text-slate-600 font-bold': activeTemplate !== 'aurora' }" class="px-3 py-1.5 rounded-xl text-xs transition-all">
+                    Aurora
+                </button>
+                <button type="button" @click="activeTemplate = 'academic'" :class="{ 'bg-white text-slate-900 shadow font-black': activeTemplate === 'academic', 'text-slate-600 font-bold': activeTemplate !== 'academic' }" class="px-3 py-1.5 rounded-xl text-xs transition-all">
+                    Academic CV
+                </button>
+            </div>
+
+            <!-- Download PDF Button -->
+            <a :href="getDownloadPdfUrl()" 
+               class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-sm"></i>
+                Download PDF
+            </a>
+
+            <!-- Print / Save Vector PDF -->
+            <button type="button" onclick="window.print()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-print"></i>
+                Print CV
+            </button>
+        </div>
+    </div>
+
+    <!-- Two-Pane Workspace: Left Editor, Right Live Preview -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT PANE: Resume Editor Controls (5 cols) -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6 no-print max-h-[850px] overflow-y-auto">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">
+                    <i class="fa-solid fa-sliders text-brand-600 mr-2"></i>Resume Content Editor
+                </h3>
+                <span class="text-[11px] font-bold text-emerald-600"><i class="fa-solid fa-bolt mr-1"></i>Live Syncing</span>
+            </div>
+
+            <!-- Target Career Role Selector -->
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700 uppercase">Target Role / Specialization</label>
+                <div class="flex gap-2">
+                    <select x-model="resume.targetRole" @change="fetchSuggestedSkills()" class="flex-1 px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        {% for role in available_roles %}
+                        <option value="{{ role }}">{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Personal Contact Details -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">1. Contact & Identity</h4>
+                
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500">Full Name</label>
+                        <input type="text" x-model="resume.name" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500">Professional Headline</label>
+                        <input type="text" x-model="resume.headline" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500">Email Address</label>
+                            <input type="email" x-model="resume.email" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500">Phone</label>
+                            <input type="text" x-model="resume.phone" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500">City, State, Country</label>
+                        <input type="text" x-model="resume.location" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500">Custom Photo URL (or uses Profile Photo)</label>
+                        <input type="text" x-model="resume.photoUrl" placeholder="https://... or auto profile photo" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Professional Summary with AI Enhancement -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">2. Executive Summary</h4>
+                    <button type="button" @click="generateAISummary()" :disabled="isEnhancing" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-[10px] font-black transition-colors inline-flex items-center gap-1 border border-amber-200">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i>
+                        <span x-text="isEnhancing ? 'Generating...' : 'AI Enhance Summary'">AI Enhance Summary</span>
+                    </button>
+                </div>
+                <textarea x-model="resume.summary" rows="4" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl leading-relaxed"></textarea>
+            </div>
+
+            <!-- Verified Skills -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">3. Technical Skills</h4>
+                    <button type="button" @click="fetchSuggestedSkills()" class="text-[10px] font-bold text-brand-600 hover:underline">
+                        + AI Skill Suggestions
+                    </button>
+                </div>
+                
+                <div class="flex flex-wrap gap-1.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <template x-for="(sk, idx) in resume.skills" :key="idx">
+                        <span class="px-2 py-0.5 rounded-lg bg-white border border-slate-300 text-slate-800 text-[11px] font-bold inline-flex items-center gap-1">
+                            <span x-text="sk"></span>
+                            <button type="button" @click="removeSkill(idx)" class="text-slate-400 hover:text-red-500 font-bold">&times;</button>
+                        </span>
+                    </template>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" x-model="newSkillInput" @keydown.enter.prevent="addSkill()" placeholder="Add a skill (e.g. Docker, PyTorch)..." class="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    <button type="button" @click="addSkill()" class="px-3 py-1.5 bg-slate-800 text-white font-bold text-xs rounded-xl">Add</button>
+                </div>
+
+                <!-- Suggested AI Skills Pills -->
+                <div x-show="suggestedSkills.length > 0" class="pt-1">
+                    <span class="text-[10px] font-bold text-slate-400 block mb-1">Recommended for {{ targetRole }}:</span>
+                    <div class="flex flex-wrap gap-1">
+                        <template x-for="rec in suggestedSkills" :key="rec">
+                            <button type="button" @click="addSuggestedSkill(rec)" class="px-2 py-0.5 rounded bg-brand-50 hover:bg-brand-100 text-brand-700 text-[10px] font-semibold border border-brand-200">
+                                + <span x-text="rec"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">4. Work & Internships</h4>
+                    <button type="button" @click="addExperienceItem()" class="text-[11px] font-bold text-brand-600 hover:underline">+ Add Experience</button>
+                </div>
+
+                <template x-for="(exp, idx) in resume.experience" :key="idx">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative">
+                        <button type="button" @click="removeExperienceItem(idx)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" x-model="exp.title" placeholder="Job Title" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="exp.company" placeholder="Company / Organization" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" x-model="exp.location" placeholder="Location" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="exp.period" placeholder="Dates (e.g. 2025 - Present)" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        </div>
+                        <textarea x-model="exp.bullets" rows="2" placeholder="Key responsibilities and metrics..." class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"></textarea>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Education -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">5. Education</h4>
+                    <button type="button" @click="addEducationItem()" class="text-[11px] font-bold text-brand-600 hover:underline">+ Add Education</button>
+                </div>
+
+                <template x-for="(edu, idx) in resume.education" :key="idx">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative">
+                        <button type="button" @click="removeEducationItem(idx)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                        <input type="text" x-model="edu.degree" placeholder="Degree / Qualification" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" x-model="edu.institution" placeholder="Institution / University" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="edu.grade" placeholder="CGPA / Grade" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Key Projects & Innovations -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">6. Projects & Innovations</h4>
+                    <button type="button" @click="addProjectItem()" class="text-[11px] font-bold text-brand-600 hover:underline">+ Add Project</button>
+                </div>
+
+                <template x-for="(proj, idx) in resume.projects" :key="idx">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative">
+                        <button type="button" @click="removeProjectItem(idx)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                        <input type="text" x-model="proj.title" placeholder="Project Title" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" x-model="proj.tech" placeholder="Technologies (e.g. Python, Docker)" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="proj.link" placeholder="GitHub / Live Link (optional)" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        </div>
+                        <textarea x-model="proj.description" rows="2" placeholder="Briefly describe key architecture, features, and results..." class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg"></textarea>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Licenses & Certifications -->
+            <div class="space-y-3 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">7. Licenses & Certifications</h4>
+                    <button type="button" @click="addCertificationItem()" class="text-[11px] font-bold text-brand-600 hover:underline">+ Add Certification</button>
+                </div>
+
+                <template x-for="(cert, idx) in resume.certifications" :key="idx">
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative">
+                        <button type="button" @click="removeCertificationItem(idx)" class="absolute top-2 right-2 text-slate-400 hover:text-red-500 text-xs font-bold">&times;</button>
+                        <input type="text" x-model="cert.title" placeholder="Certification Title" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" x-model="cert.issuer" placeholder="Issuing Body" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="cert.year" placeholder="Year / Date" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                            <input type="text" x-model="cert.credential_id" placeholder="Credential ID / Link" class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg">
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANE: Live Visual Resume Canvas (7 cols) -->
+        <div class="lg:col-span-7 space-y-3">
+            
+            <div class="flex items-center justify-between px-2 text-xs no-print">
+                <span class="font-extrabold text-slate-500 uppercase tracking-wider">Live Dynamic Preview</span>
+                <span class="text-slate-400">Template: <strong class="text-slate-700 uppercase" x-text="activeTemplate"></strong></span>
+            </div>
+
+            <!-- Printable Canvas Container -->
+            <div id="resume-preview-canvas" class="bg-white rounded-3xl shadow-xl border border-slate-200 p-8 sm:p-10 transition-all min-h-[900px]">
+                
+                <!-- ============================================== -->
+                <!-- TEMPLATE 1: MODERN TECH (Silicon Valley) -->
+                <!-- ============================================== -->
+                <div x-show="activeTemplate === 'modern'" class="space-y-6">
+                    
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 border-b border-slate-200 pb-6">
+                        <div class="space-y-2 text-center sm:text-left flex-1">
+                            <h2 class="text-3xl font-black tracking-tight text-slate-900" x-text="resume.name"></h2>
+                            <p class="text-sm font-bold text-brand-600" x-text="resume.headline"></p>
+                            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1 justify-center sm:justify-start font-medium">
+                                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-envelope text-slate-400"></i><span x-text="resume.email"></span></span>
+                                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-phone text-slate-400"></i><span x-text="resume.phone"></span></span>
+                                <span class="inline-flex items-center gap-1"><i class="fa-solid fa-location-dot text-slate-400"></i><span x-text="resume.location"></span></span>
+                            </div>
+                        </div>
+
+                        <!-- Photo & QR Code Badge -->
+                        <div class="flex items-center gap-3 shrink-0">
+                            <!-- Student Profile Photo -->
+                            <img :src="resume.photoUrl" alt="Photo" class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500 shadow-md">
+                            
+                            {% if qr_data_uri %}
+                            <!-- Official AIC Passport QR -->
+                            <div class="p-1.5 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-sm">
+                                <img src="{{ qr_data_uri }}" alt="QR" class="w-16 h-16 object-contain">
+                                <span class="text-[8px] font-mono font-bold text-slate-500 block">PASSPORT</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Executive Summary</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed font-normal" x-text="resume.summary"></p>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Technical Competencies</h3>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="sk in resume.skills" :key="sk">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200" x-text="sk"></span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Work Experience -->
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Experience & Contributions</h3>
+                        <div class="space-y-4">
+                            <template x-for="exp in resume.experience" :key="exp.title">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between items-baseline flex-wrap">
+                                        <h4 class="font-bold text-xs text-slate-900"><span x-text="exp.title"></span> • <span class="text-brand-700" x-text="exp.company"></span></h4>
+                                        <span class="text-[10px] font-semibold text-slate-400" x-text="exp.period"></span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 font-medium" x-text="exp.location"></p>
+                                    <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-line pt-0.5" x-text="exp.bullets"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Education & Academics</h3>
+                        <div class="space-y-2">
+                            <template x-for="edu in resume.education" :key="edu.degree">
+                                <div class="flex justify-between items-baseline flex-wrap text-xs">
+                                    <div>
+                                        <h4 class="font-bold text-slate-900" x-text="edu.degree"></h4>
+                                        <p class="text-slate-500 font-medium text-[11px]" x-text="edu.institution"></p>
+                                    </div>
+                                    <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" x-text="edu.grade"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="space-y-3" x-show="resume.projects && resume.projects.length > 0">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Key Engineering Projects</h3>
+                        <div class="space-y-3">
+                            <template x-for="proj in resume.projects" :key="proj.title">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between items-baseline flex-wrap">
+                                        <h4 class="font-bold text-xs text-slate-900"><span x-text="proj.title"></span> <span class="text-brand-600 font-medium" x-show="proj.tech">• <span x-text="proj.tech"></span></span></h4>
+                                        <a x-show="proj.link" :href="proj.link" target="_blank" class="text-[10px] text-brand-600 hover:underline"><i class="fa-solid fa-arrow-up-right-from-square mr-0.5"></i>Link</a>
+                                    </div>
+                                    <p class="text-xs text-slate-600 leading-relaxed" x-text="proj.description"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Certifications -->
+                    <div class="space-y-3" x-show="resume.certifications && resume.certifications.length > 0">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-900 border-l-4 border-brand-600 pl-2">Licenses & Certifications</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <template x-for="cert in resume.certifications" :key="cert.title">
+                                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5 text-xs">
+                                    <h4 class="font-bold text-slate-900" x-text="cert.title"></h4>
+                                    <p class="text-slate-500 text-[11px]"><span x-text="cert.issuer"></span> • <span x-text="cert.year"></span></p>
+                                    <p x-show="cert.credential_id" class="text-[10px] font-mono text-brand-700" x-text="'ID: ' + cert.credential_id"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="pt-6 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>AIC PORTAL Verified AIC Passport Credential</span>
+                        <span>Official Digital Record</span>
+                    </div>
+
+                </div>
+
+                <!-- ============================================== -->
+                <!-- TEMPLATE 2: EXECUTIVE MINIMALIST -->
+                <!-- ============================================== -->
+                <div x-show="activeTemplate === 'executive'" class="space-y-6 font-serif">
+                    
+                    <div class="text-center space-y-2 border-b-2 border-slate-900 pb-6">
+                        <div class="flex justify-center mb-3">
+                            <img :src="resume.photoUrl" alt="Photo" class="w-20 h-20 rounded-full object-cover border border-slate-300 shadow">
+                        </div>
+                        <h2 class="text-3xl font-bold tracking-normal text-slate-900 font-sans uppercase" x-text="resume.name"></h2>
+                        <p class="text-xs font-sans uppercase tracking-widest text-slate-600" x-text="resume.headline"></p>
+                        <p class="text-xs font-sans text-slate-500">
+                            <span x-text="resume.email"></span> | <span x-text="resume.phone"></span> | <span x-text="resume.location"></span>
+                        </p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Professional Profile</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed font-sans" x-text="resume.summary"></p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Core Expertise</h3>
+                        <p class="text-xs font-sans text-slate-700 leading-relaxed" x-text="resume.skills.join(' • ')"></p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Professional History</h3>
+                        <template x-for="exp in resume.experience" :key="exp.title">
+                            <div class="space-y-1 font-sans">
+                                <div class="flex justify-between items-baseline">
+                                    <h4 class="font-bold text-xs text-slate-900" x-text="exp.title + ' — ' + exp.company"></h4>
+                                    <span class="text-[10px] text-slate-500" x-text="exp.period"></span>
+                                </div>
+                                <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed" x-text="exp.bullets"></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Education</h3>
+                        <template x-for="edu in resume.education" :key="edu.degree">
+                            <div class="flex justify-between items-baseline font-sans text-xs">
+                                <div>
+                                    <span class="font-bold text-slate-900" x-text="edu.degree"></span>
+                                    <span class="text-slate-500 block text-[11px]" x-text="edu.institution"></span>
+                                </div>
+                                <span class="text-slate-600 font-bold text-[11px]" x-text="edu.grade"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Notable Projects -->
+                    <div class="space-y-3" x-show="resume.projects && resume.projects.length > 0">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Notable Projects</h3>
+                        <template x-for="proj in resume.projects" :key="proj.title">
+                            <div class="space-y-0.5 font-sans">
+                                <div class="flex justify-between items-baseline">
+                                    <h4 class="font-bold text-xs text-slate-900"><span x-text="proj.title"></span> <span class="text-slate-500 font-normal" x-show="proj.tech">(<span x-text="proj.tech"></span>)</span></h4>
+                                    <a x-show="proj.link" :href="proj.link" target="_blank" class="text-[10px] text-slate-500 hover:text-slate-900 underline" x-text="proj.link"></a>
+                                </div>
+                                <p class="text-xs text-slate-700 leading-relaxed" x-text="proj.description"></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Certifications & Accreditations -->
+                    <div class="space-y-2" x-show="resume.certifications && resume.certifications.length > 0">
+                        <h3 class="text-xs font-sans font-bold uppercase tracking-wider text-slate-900 border-b border-slate-200 pb-1">Certifications & Accreditations</h3>
+                        <template x-for="cert in resume.certifications" :key="cert.title">
+                            <div class="flex justify-between items-baseline font-sans text-xs">
+                                <div>
+                                    <span class="font-bold text-slate-900" x-text="cert.title"></span>
+                                    <span class="text-slate-500 block text-[11px]" x-text="cert.issuer"></span>
+                                </div>
+                                <span class="text-slate-600 text-[11px]" x-text="cert.year + (cert.credential_id ? ' | ' + cert.credential_id : '')"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+                <!-- ============================================== -->
+                <!-- TEMPLATE 3: CREATIVE AURORA -->
+                <!-- ============================================== -->
+                <div x-show="activeTemplate === 'aurora'" class="space-y-6">
+                    
+                    <!-- Gradient Hero Header -->
+                    <div class="bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <h2 class="text-2xl font-black" x-text="resume.name"></h2>
+                            <p class="text-xs font-semibold text-purple-200" x-text="resume.headline"></p>
+                            <p class="text-[11px] text-purple-100/80 pt-1">
+                                <span x-text="resume.email"></span> • <span x-text="resume.phone"></span> • <span x-text="resume.location"></span>
+                            </p>
+                        </div>
+                        <img :src="resume.photoUrl" alt="Photo" class="w-18 h-18 rounded-xl object-cover border-2 border-white/60 shadow shrink-0">
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-1.5">
+                        <h3 class="text-xs font-extrabold text-purple-900 uppercase tracking-wider">About Me</h3>
+                        <p class="text-xs text-purple-950/80 leading-relaxed font-normal" x-text="resume.summary"></p>
+                    </div>
+
+                    <!-- Skills Badges -->
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-black uppercase text-slate-800">Skillset & Technologies</h3>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="sk in resume.skills" :key="sk">
+                                <span class="px-3 py-1 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 text-indigo-900 text-[11px] font-extrabold border border-indigo-200 shadow-sm" x-text="sk"></span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Experience -->
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black uppercase text-slate-800">Experience</h3>
+                        <template x-for="exp in resume.experience" :key="exp.title">
+                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                                <div class="flex justify-between items-baseline">
+                                    <h4 class="font-extrabold text-xs text-slate-900" x-text="exp.title + ' @ ' + exp.company"></h4>
+                                    <span class="text-[10px] font-bold text-indigo-600" x-text="exp.period"></span>
+                                </div>
+                                <p class="text-xs text-slate-600 whitespace-pre-line leading-relaxed" x-text="exp.bullets"></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-black uppercase text-slate-800">Education</h3>
+                        <template x-for="edu in resume.education" :key="edu.degree">
+                            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center text-xs">
+                                <div>
+                                    <h4 class="font-bold text-slate-900" x-text="edu.degree"></h4>
+                                    <p class="text-slate-500 text-[11px]" x-text="edu.institution"></p>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-extrabold" x-text="edu.grade"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Projects -->
+                    <div class="space-y-3" x-show="resume.projects && resume.projects.length > 0">
+                        <h3 class="text-xs font-black uppercase text-slate-800">Featured Projects</h3>
+                        <template x-for="proj in resume.projects" :key="proj.title">
+                            <div class="p-3 bg-purple-50/50 border border-purple-100 rounded-xl space-y-1">
+                                <div class="flex justify-between items-baseline flex-wrap">
+                                    <h4 class="font-extrabold text-xs text-purple-950" x-text="proj.title"></h4>
+                                    <span x-show="proj.tech" class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold" x-text="proj.tech"></span>
+                                </div>
+                                <p class="text-xs text-slate-600 leading-relaxed" x-text="proj.description"></p>
+                                <a x-show="proj.link" :href="proj.link" target="_blank" class="text-[10px] font-bold text-purple-700 hover:underline inline-block mt-0.5" x-text="proj.link"></a>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Certifications -->
+                    <div class="space-y-2" x-show="resume.certifications && resume.certifications.length > 0">
+                        <h3 class="text-xs font-black uppercase text-slate-800">Certifications & Badges</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <template x-for="cert in resume.certifications" :key="cert.title">
+                                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-0.5 text-xs">
+                                    <h4 class="font-extrabold text-slate-900" x-text="cert.title"></h4>
+                                    <p class="text-[11px] text-purple-700 font-semibold" x-text="cert.issuer"></p>
+                                    <p class="text-[10px] text-slate-400" x-text="cert.year + (cert.credential_id ? ' • ' + cert.credential_id : '')"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ============================================== -->
+                <!-- TEMPLATE 4: ACADEMIC CV -->
+                <!-- ============================================== -->
+                <div x-show="activeTemplate === 'academic'" class="space-y-5 text-slate-800">
+                    
+                    <div class="border-b border-slate-300 pb-4 flex justify-between items-start">
+                        <div>
+                            <h2 class="text-2xl font-bold uppercase tracking-tight text-slate-900" x-text="resume.name"></h2>
+                            <p class="text-xs font-bold text-slate-600" x-text="resume.headline"></p>
+                            <p class="text-xs text-slate-500 mt-1 font-mono">
+                                <span x-text="resume.email"></span> | <span x-text="resume.phone"></span> | <span x-text="resume.location"></span>
+                            </p>
+                        </div>
+                        <img :src="resume.photoUrl" alt="Photo" class="w-16 h-16 rounded border border-slate-400 object-cover shrink-0">
+                    </div>
+
+                    <div class="space-y-1">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Academic & Research Focus</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed pt-1" x-text="resume.summary"></p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Education & Credentials</h3>
+                        <template x-for="edu in resume.education" :key="edu.degree">
+                            <div class="text-xs space-y-0.5">
+                                <p class="font-bold text-slate-900" x-text="edu.degree"></p>
+                                <p class="text-slate-600"><span x-text="edu.institution"></span> • <span x-text="edu.grade"></span></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Core Competencies & Research Methods</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed font-mono" x-text="resume.skills.join(', ')"></p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Experience & Apprenticeships</h3>
+                        <template x-for="exp in resume.experience" :key="exp.title">
+                            <div class="text-xs space-y-0.5">
+                                <div class="flex justify-between font-bold text-slate-900">
+                                    <span x-text="exp.title + ', ' + exp.company"></span>
+                                    <span class="font-normal text-slate-500" x-text="exp.period"></span>
+                                </div>
+                                <p class="text-slate-600 whitespace-pre-line leading-relaxed" x-text="exp.bullets"></p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Research & Development Projects -->
+                    <div class="space-y-2" x-show="resume.projects && resume.projects.length > 0">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Research & Development Projects</h3>
+                        <template x-for="proj in resume.projects" :key="proj.title">
+                            <div class="text-xs space-y-0.5">
+                                <div class="flex justify-between font-bold text-slate-900">
+                                    <span x-text="proj.title"></span>
+                                    <span class="font-mono text-[10px] text-slate-500" x-text="proj.tech"></span>
+                                </div>
+                                <p class="text-slate-600 leading-relaxed" x-text="proj.description"></p>
+                                <a x-show="proj.link" :href="proj.link" target="_blank" class="text-[10px] font-mono text-slate-500 hover:text-slate-900 underline block" x-text="proj.link"></a>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Professional Certifications & Accreditations -->
+                    <div class="space-y-2" x-show="resume.certifications && resume.certifications.length > 0">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 bg-slate-100 p-1">Professional Certifications & Accreditations</h3>
+                        <template x-for="cert in resume.certifications" :key="cert.title">
+                            <div class="text-xs space-y-0.5">
+                                <div class="flex justify-between font-bold text-slate-900">
+                                    <span x-text="cert.title"></span>
+                                    <span class="font-normal text-slate-500" x-text="cert.year"></span>
+                                </div>
+                                <p class="text-slate-600 text-[11px]"><span x-text="cert.issuer"></span><span x-show="cert.credential_id" x-text="' — Credential: ' + cert.credential_id"></span></p>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function resumeBuilder() {
+    return {
+        activeTemplate: 'modern',
+        isEnhancing: false,
+        newSkillInput: '',
+        suggestedSkills: [],
+        resume: {
+            name: "{{ user.get_full_name|default:user.email }}",
+            headline: "{{ profile.headline|default:'Software & Artificial Intelligence Engineer' }}",
+            email: "{{ user.email }}",
+            phone: "+91 98765 43210",
+            location: "{{ profile.location|default:'Bengaluru, Karnataka, India' }}",
+            photoUrl: "{% if profile.profile_photo %}{{ profile.profile_photo.url }}{% else %}https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=1e1b4b&color=fff&size=256{% endif %}",
+            targetRole: "AI Backend Engineer",
+            summary: "{{ profile.bio|default:'Results-oriented Software and AI Engineer with demonstrable technical grounding in distributed systems, machine learning architectures, and modern web platforms. Verified graduate from the AIC ecosystem with verified skill credentials.' }}",
+            skills: {{ verified_skills|safe }} || ['Python', 'Django', 'Machine Learning', 'Docker', 'PostgreSQL', 'Git'],
+            experience: {{ default_experience|safe }},
+            education: {{ default_education|safe }},
+            projects: {{ default_projects|safe|default:"[]" }},
+            certifications: {{ default_certifications|safe|default:"[]" }}
+        },
+        init() {
+            if (this.resume.skills.length === 0) {
+                this.resume.skills = ['Python', 'Django', 'Machine Learning', 'Docker', 'PostgreSQL', 'Git'];
+            }
+        },
+        addSkill() {
+            const s = this.newSkillInput.trim();
+            if (s && !this.resume.skills.includes(s)) {
+                this.resume.skills.push(s);
+                this.newSkillInput = '';
+            }
+        },
+        removeSkill(index) {
+            this.resume.skills.splice(index, 1);
+        },
+        addSuggestedSkill(sk) {
+            if (!this.resume.skills.includes(sk)) {
+                this.resume.skills.push(sk);
+            }
+        },
+        addExperienceItem() {
+            this.resume.experience.push({
+                title: 'New Position',
+                company: 'Company Name',
+                location: 'Location',
+                period: '2026 - Present',
+                bullets: 'Describe your key contributions and outcomes here...'
+            });
+        },
+        removeExperienceItem(idx) {
+            this.resume.experience.splice(idx, 1);
+        },
+        addEducationItem() {
+            this.resume.education.push({
+                degree: 'New Qualification / Degree',
+                institution: 'University / Institute Name',
+                grade: 'First Class'
+            });
+        },
+        removeEducationItem(idx) {
+            this.resume.education.splice(idx, 1);
+        },
+        addProjectItem() {
+            this.resume.projects.push({
+                title: 'New Innovation Project',
+                tech: 'Python, Django, Tailwind CSS',
+                description: 'Engineered a scalable system addressing complex domain requirements.',
+                link: 'https://github.com/project'
+            });
+        },
+        removeProjectItem(idx) {
+            this.resume.projects.splice(idx, 1);
+        },
+        addCertificationItem() {
+            this.resume.certifications.push({
+                title: 'New Industry Certification',
+                issuer: 'Certification Authority',
+                year: '2026',
+                credential_id: 'CERT-2026-X'
+            });
+        },
+        removeCertificationItem(idx) {
+            this.resume.certifications.splice(idx, 1);
+        },
+        getDownloadPdfUrl() {
+            const params = new URLSearchParams();
+            params.set('name', this.resume.name || '');
+            params.set('headline', this.resume.headline || '');
+            params.set('email', this.resume.email || '');
+            params.set('phone', this.resume.phone || '');
+            params.set('location', this.resume.location || '');
+            params.set('summary', this.resume.summary || '');
+            params.set('skills', (this.resume.skills || []).join(','));
+            params.set('projects', JSON.stringify(this.resume.projects || []));
+            params.set('certifications', JSON.stringify(this.resume.certifications || []));
+            return '/resume/download-pdf/?' + params.toString();
+        },
+        async generateAISummary() {
+            this.isEnhancing = true;
+            try {
+                const res = await fetch('/api/resume/ai-enhance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        action: 'enhance_summary',
+                        target_role: this.resume.targetRole,
+                        skills: this.resume.skills
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.summaries.length > 0) {
+                    this.resume.summary = data.summaries[0];
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.isEnhancing = false;
+            }
+        },
+        async fetchSuggestedSkills() {
+            try {
+                const res = await fetch('/api/resume/ai-enhance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        action: 'suggest_skills',
+                        target_role: this.resume.targetRole
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.suggestedSkills = data.suggested_skills;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Ecosystem Assistant | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6" x-data="aiChatbotPage()">
+
+    <!-- Header Card -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-black uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                AIC Role-Aware AI Assistant
+            </div>
+            <h1 class="text-2xl font-black text-slate-900">Intelligent Academic & Career Copilot</h1>
+            <p class="text-xs text-slate-500">Ask questions about courses, certifications, careers, research grants, AIC Passports, or portal features.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-1 bg-slate-100 rounded-xl text-xs font-bold text-slate-700 uppercase border border-slate-200">
+                <i class="fa-solid fa-user-shield text-brand-600 mr-1"></i>Role: {{ current_role|default:"Scholar" }}
+            </span>
+            <button type="button" @click="clearMessages()" class="px-3 py-1 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fa-solid fa-trash-can mr-1"></i>Clear Chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Messages Window -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[580px]">
+        
+        <!-- Messages Scroll Area -->
+        <div class="flex-1 p-6 overflow-y-auto space-y-4" id="chat-messages-container">
+            <template x-for="(msg, idx) in messages" :key="idx">
+                <div class="flex gap-3" :class="{ 'justify-end': msg.isUser, 'justify-start': !msg.isUser }">
+                    
+                    <!-- Bot Avatar -->
+                    <template x-if="!msg.isUser">
+                        <div class="w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            <i class="fa-solid fa-robot text-xs"></i>
+                        </div>
+                    </template>
+
+                    <!-- Message Bubble -->
+                    <div class="max-w-2xl p-4 rounded-2xl text-xs leading-relaxed"
+                         :class="{ 'bg-brand-600 text-white font-medium shadow-sm rounded-tr-none': msg.isUser, 'bg-slate-50 border border-slate-200 text-slate-800 rounded-tl-none space-y-2': !msg.isUser }">
+                        <div class="whitespace-pre-line" x-html="formatMessage(msg.text)"></div>
+                    </div>
+
+                    <!-- User Avatar -->
+                    <template x-if="msg.isUser">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                            <i class="fa-solid fa-user text-xs"></i>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Typing Indicator -->
+            <div x-show="isThinking" class="flex gap-3 items-center text-xs text-slate-400 italic">
+                <div class="w-8 h-8 rounded-full bg-brand-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                    <i class="fa-solid fa-robot text-xs"></i>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style="animation-delay: 0.2s"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style="animation-delay: 0.4s"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Prompt Starters -->
+        <div class="px-6 py-3 bg-slate-50/70 border-t border-slate-100 flex flex-wrap gap-2 items-center">
+            <span class="text-[10px] font-bold uppercase text-slate-400 shrink-0">Suggested:</span>
+            {% for prompt in quick_prompts %}
+            <button type="button" @click="sendQuickPrompt('{{ prompt|escapejs }}')" class="px-3 py-1 bg-white hover:bg-brand-50 hover:border-brand-300 text-slate-700 hover:text-brand-700 rounded-full text-[11px] font-semibold border border-slate-200 shadow-sm transition-all">
+                {{ prompt }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-4 bg-white border-t border-slate-200">
+            <form @submit.prevent="sendMessage()" class="flex gap-2">
+                <input type="text" x-model="userInput" placeholder="Ask anything about courses, certifications, career paths, AIC Passport, or research..." 
+                       class="flex-1 px-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium">
+                <button type="submit" :disabled="!userInput.trim() || isThinking" 
+                        class="px-6 py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-bold text-xs rounded-2xl shadow transition-all flex items-center gap-2">
+                    <span>Send</span>
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function aiChatbotPage() {
+    return {
+        userInput: '',
+        isThinking: false,
+        messages: [
+            {
+                isUser: false,
+                text: "Hello! I am your **AIC Ecosystem AI Assistant**, specialized for your role as **{{ current_role|default:'Scholar' }}**.\n\nHow can I help you today? You can choose a suggested question below or type your own question anytime."
+            }
+        ],
+        formatMessage(text) {
+            // Convert markdown bold, bullet, and link syntax to HTML
+            let html = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-brand-600 font-bold underline hover:text-brand-800">$1</a>');
+            return html;
+        },
+        scrollToBottom() {
+            setTimeout(() => {
+                const el = document.getElementById('chat-messages-container');
+                if (el) el.scrollTop = el.scrollHeight;
+            }, 50);
+        },
+        sendQuickPrompt(promptText) {
+            this.userInput = promptText;
+            this.sendMessage();
+        },
+        async sendMessage() {
+            const query = this.userInput.trim();
+            if (!query || this.isThinking) return;
+
+            this.messages.push({ isUser: true, text: query });
+            this.userInput = '';
+            this.isThinking = true;
+            this.scrollToBottom();
+
+            try {
+                const res = await fetch('/api/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ message: query })
+                });
+                const data = await res.json();
+                this.messages.push({
+                    isUser: false,
+                    text: data.reply || "I am processing your query. Please check back shortly."
+                });
+            } catch (err) {
+                console.error(err);
+                this.messages.push({
+                    isUser: false,
+                    text: "I encountered a network issue. Please try again."
+                });
+            } finally {
+                this.isThinking = false;
+                this.scrollToBottom();
+            }
+        },
+        clearMessages() {
+            this.messages = [
+                {
+                    isUser: false,
+                    text: "Conversation cleared. Feel free to ask another question!"
+                }
+            ];
+        }
+    }
+}
+</script>
+{% endblock %}

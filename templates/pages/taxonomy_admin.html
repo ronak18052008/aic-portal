@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Taxonomy Configuration | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">Global Taxonomy Configuration</h2>
+        <p class="text-xs text-slate-500">Configure global education fields, subfields, specializations, and ISCED mappings.</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-sm text-slate-900">Active Taxonomy Fields</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            {% for f in fields %}
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 flex justify-between items-center">
+                <span>{{ f.name }}</span>
+                <span class="text-[10px] text-brand-600 bg-brand-50 px-2 py-0.5 rounded">{{ f.get_category_display }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

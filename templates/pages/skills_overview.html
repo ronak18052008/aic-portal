@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}My Skill Intelligence | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div>
+            <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-200">SKILL INTELLIGENCE</span>
+            <h2 class="text-2xl font-black text-slate-900 mt-2">Verified Skill Portfolio</h2>
+            <p class="text-xs text-slate-500">Skills backed by real course completions, adaptive assessments, and mentor endorsements.</p>
+        </div>
+        <a href="/skills/gap/" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow">
+            Run Skill Gap Analysis →
+        </a>
+    </div>
+
+    <!-- Verified Skills Grid -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <h3 class="font-black text-slate-900 text-lg border-b border-slate-100 pb-3">My Skills & Evidence ({{ user_skills.count }})</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for us in user_skills %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-900">{{ us.skill.name }}</h4>
+                        <span class="text-[11px] text-slate-500 font-semibold">{{ us.skill.category }}</span>
+                    </div>
+                    <span class="px-2.5 py-1 bg-brand-100 text-brand-800 font-extrabold text-[10px] rounded-full uppercase">{{ us.proficiency }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs pt-2 border-t border-slate-200 text-slate-600">
+                    <span><i class="fa-solid fa-certificate text-emerald-600 mr-1"></i>{{ us.get_evidence_type_display }}</span>
+                    <span class="font-bold text-brand-700">{{ us.score_percentage }}% Proficiency Score</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xs text-slate-500 col-span-2">
+                No skills added yet. Use the cascading selector below to add your verified technical skills!
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Add New Skill Form with 2-Step Cascading Selector (Field -> Skill) -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4" x-data="cascadingSkillPicker()">
+        <div class="border-b border-slate-100 pb-3">
+            <h3 class="font-black text-slate-900 text-base">Add New Skill to Profile</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Select the primary academic/industry field first, then choose the specific skill competency.</p>
+        </div>
+
+        <form method="POST" class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+            {% csrf_token %}
+            
+            <!-- Step 1: Primary Field -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">1. Main Discipline / Field</label>
+                <select x-model="selectedFieldId" @change="onFieldChange()" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-brand-500">
+                    <template x-for="f in fieldsData" :key="f.id">
+                        <option :value="f.id" x-text="f.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Step 2: Skill in Field -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">2. Specific Skill Competency</label>
+                <select name="skill_id" x-model="selectedSkillId" required class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-brand-500">
+                    <option value="">Choose Skill...</option>
+                    <template x-for="sk in availableSkillsForField" :key="sk.id">
+                        <option :value="sk.id" x-text="sk.name + ' (' + sk.category + ')'"></option>
+                    </template>
+                </select>
+            </div>
+            
+            <!-- Step 3: Proficiency -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-700 uppercase mb-1">3. Self-Proficiency Level</label>
+                <select name="proficiency" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-800 focus:ring-2 focus:ring-brand-500">
+                    {% for code, label in proficiency_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all h-[42px]">
+                    <i class="fa-solid fa-plus mr-1"></i> Add Skill to Profile
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script>
+function cascadingSkillPicker() {
+    return {
+        fieldsData: {{ fields_with_skills_json|safe }},
+        selectedFieldId: '',
+        availableSkillsForField: [],
+        selectedSkillId: '',
+        onFieldChange() {
+            var self = this;
+            var match = this.fieldsData.find(function(f) {
+                return f.id === self.selectedFieldId;
+            });
+            this.availableSkillsForField = match ? match.skills : [];
+            this.selectedSkillId = this.availableSkillsForField.length > 0 ? this.availableSkillsForField[0].id : '';
+        },
+        init() {
+            if (this.fieldsData && this.fieldsData.length > 0) {
+                this.selectedFieldId = this.fieldsData[0].id;
+                this.onFieldChange();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

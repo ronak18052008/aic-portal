@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}AIC PORTAL | Global Academia-Industry Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-12 max-w-7xl mx-auto">
+    
+    <!-- Hero Banner with Official Logo Presentation -->
+    <div class="relative gradient-brand rounded-3xl p-8 md:p-12 text-white shadow-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+        
+        <div class="space-y-6 max-w-2xl z-10">
+            <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full text-xs font-bold tracking-wide">
+                <span class="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span>
+                <span>PRODUCTION PLATFORM</span>
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight leading-tight">
+                Where Skills Meet <span class="text-amber-400">Opportunity</span>
+            </h1>
+            
+            <p class="text-slate-200 text-sm md:text-base leading-relaxed">
+                Connect Students, Academicians, Industry Leaders, and Institutions worldwide. Discover verified degree programmes, global courses, skill intelligence, adaptive assessments, and recruitment pipelines.
+            </p>
+
+            <!-- Search Form in Hero -->
+            <form action="/search/" method="GET" class="relative max-w-xl">
+                <input type="text" name="q" placeholder="What are you looking for? (e.g. AI B.Tech, Python Course, Internships)..." 
+                       class="w-full pl-12 pr-28 py-3.5 rounded-full text-slate-900 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-amber-400/50 shadow-xl font-medium">
+                <i class="fa-solid fa-magnifying-glass absolute left-4.5 top-4 text-slate-400 text-base"></i>
+                <button type="submit" class="absolute right-1.5 top-1.5 bg-brand-700 hover:bg-brand-800 text-white px-5 py-2 rounded-full text-xs font-bold transition-all shadow">
+                    Search
+                </button>
+            </form>
+
+            <!-- Real Counts Badges -->
+            <div class="flex flex-wrap gap-4 pt-2 text-xs font-semibold text-slate-200">
+                <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 flex items-center space-x-2">
+                    <i class="fa-solid fa-building-columns text-amber-400"></i>
+                    <span>{{ institution_count }} Verified Institutions</span>
+                </div>
+                <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 flex items-center space-x-2">
+                    <i class="fa-solid fa-book-open text-sky-300"></i>
+                    <span>{{ course_count }} Global Courses</span>
+                </div>
+                <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 flex items-center space-x-2">
+                    <i class="fa-solid fa-briefcase text-emerald-400"></i>
+                    <span>{{ opportunity_count }} Live Opportunities</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Official Logo Presentation Card -->
+        <div class="relative z-10 shrink-0 bg-white p-6 rounded-2xl shadow-2xl border border-white/20 transform hover:scale-105 transition-transform duration-300">
+            <img src="{{ aic_logo_url }}" alt="AIC Official Logo" class="w-64 md:w-72 h-auto object-contain drop-shadow-md">
+            <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                <span class="text-[11px] font-extrabold text-brand-900 tracking-wider uppercase block">AIC Official Identity</span>
+                <span class="text-[10px] font-semibold text-amber-600 block">Verified Global Architecture</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Pills Navigation -->
+    <div class="space-y-4">
+        <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Explore Ecosystem Categories</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            <a href="/search/?type=institutions" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-university"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900">Universities</h4>
+                    <p class="text-[10px] text-slate-500">Directory & NIRF</p>
+                </div>
+            </a>
+            <a href="/search/?type=courses" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900">Courses</h4>
+                    <p class="text-[10px] text-slate-500">Online & Campus</p>
+                </div>
+            </a>
+            <a href="/search/?type=jobs" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900">Job Recruitment</h4>
+                    <p class="text-[10px] text-slate-500">Full-time & Hybrid</p>
+                </div>
+            </a>
+            <a href="/search/?type=internships" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-laptop-code"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900">Internships</h4>
+                    <p class="text-[10px] text-slate-500">Paid & Remote</p>
+                </div>
+            </a>
+            <a href="/skills/" class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition-all flex items-center space-x-3 group">
+                <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900">Skill Intelligence</h4>
+                    <p class="text-[10px] text-slate-500">Gap Engine</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Featured Fields (Expandable on Click, Collapsed by Default) -->
+    <div class="space-y-4" x-data="{ expandedField: null }">
+        <div class="flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Global Education & Skill Fields</h3>
+                <p class="text-xs text-slate-500">Click on any field to expand subfields, certifications, and specializations</p>
+            </div>
+            <a href="/search/" class="text-xs font-bold text-brand-600 hover:text-brand-700">View All Fields →</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {% for field in featured_fields %}
+            <div class="bg-white rounded-2xl border border-slate-200 transition-all shadow-sm flex flex-col justify-between overflow-hidden"
+                 :class="{ 'ring-2 ring-brand-500 border-brand-500 shadow-md': expandedField === '{{ field.slug }}', 'hover:border-brand-300 hover:shadow': expandedField !== '{{ field.slug }}' }">
+                
+                <!-- Clickable Field Card Header (Expands on Click) -->
+                <button type="button" 
+                        @click="expandedField = (expandedField === '{{ field.slug }}' ? null : '{{ field.slug }}')"
+                        class="w-full text-left p-5 space-y-2 group cursor-pointer focus:outline-none">
+                    <div class="flex items-center justify-between">
+                        <div class="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-brand-50 text-brand-600 flex items-center justify-center text-lg transition-colors">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600"
+                                  :class="{ 'bg-brand-100 text-brand-800': expandedField === '{{ field.slug }}' }">
+                                {{ field.subfields.count }} subfield{{ field.subfields.count|pluralize }}
+                            </span>
+                            <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"
+                               :class="{ 'rotate-180 text-brand-600': expandedField === '{{ field.slug }}' }"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition-colors">{{ field.name }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ field.description }}</p>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ field.get_category_display }}</span>
+                        <span class="text-[11px] font-bold text-brand-600 flex items-center gap-1" x-text="expandedField === '{{ field.slug }}' ? 'Collapse ▲' : 'Expand ▼'">Expand ▼</span>
+                    </div>
+                </button>
+
+                <!-- Expanded Content Drawer (Only Visible on Click, Hidden by Default) -->
+                <div x-show="expandedField === '{{ field.slug }}'" 
+                     x-collapse
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+                    
+                    <!-- Subfields Tags -->
+                    <div class="space-y-1.5">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">Subfields & Tracks:</span>
+                        <div class="flex flex-wrap gap-1">
+                            {% for sub in field.subfields.all %}
+                            <a href="/search/?field={{ field.slug }}&q={{ sub.name }}" class="px-2 py-0.5 bg-white border border-slate-200 hover:border-brand-400 hover:text-brand-600 text-[11px] font-semibold text-slate-700 rounded-md transition-all inline-flex items-center gap-1">
+                                <i class="fa-solid fa-angle-right text-[8px] text-brand-500"></i>{{ sub.name }}
+                            </a>
+                            {% empty %}
+                            <span class="text-xs text-slate-400">Core discipline specialization</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Ecosystem Shortcuts for this Field -->
+                    <div class="pt-2 border-t border-slate-200/60 grid grid-cols-2 gap-1.5 text-center">
+                        <a href="/certifications/?field={{ field.slug }}" class="px-2 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-lg text-[11px] font-bold transition-colors">
+                            <i class="fa-solid fa-certificate mr-1"></i>Certifications
+                        </a>
+                        <a href="/search/?type=courses&field={{ field.slug }}" class="px-2 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-bold transition-colors">
+                            <i class="fa-solid fa-graduation-cap mr-1"></i>Courses
+                        </a>
+                        <a href="/search/?type=programmes&field={{ field.slug }}" class="px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[11px] font-bold transition-colors">
+                            <i class="fa-solid fa-university mr-1"></i>Degrees
+                        </a>
+                        <a href="/search/?type=jobs&field={{ field.slug }}" class="px-2 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-[11px] font-bold transition-colors">
+                            <i class="fa-solid fa-briefcase mr-1"></i>Jobs
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Live Opportunities & Courses Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Featured Opportunities -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-black text-slate-900">Verified Opportunities</h3>
+                <a href="/search/?type=jobs" class="text-xs font-bold text-brand-600">See All Jobs & Internships →</a>
+            </div>
+            <div class="space-y-3">
+                {% for opp in featured_opportunities %}
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-brand-300 shadow-sm flex items-start justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-emerald-100 text-emerald-800 uppercase">{{ opp.get_opportunity_type_display }}</span>
+                            <span class="text-xs text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>{{ opp.city }}, {{ opp.country }}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">{{ opp.title }}</h4>
+                        <p class="text-xs text-slate-600 font-medium">{{ opp.organization_name }}</p>
+                        <p class="text-[11px] text-emerald-600 font-semibold">₹{{ opp.stipend_salary|floatformat:0 }} {{ opp.salary_period }}</p>
+                    </div>
+                    <a href="/opportunities/{{ opp.id }}/apply/" class="shrink-0 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow">
+                        Apply Now
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Featured Courses -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-black text-slate-900">Global Verified Courses</h3>
+                <a href="/search/?type=courses" class="text-xs font-bold text-brand-600">See All Courses →</a>
+            </div>
+            <div class="space-y-3">
+                {% for course in featured_courses %}
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-brand-300 shadow-sm flex items-start justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-sky-100 text-sky-800 uppercase">{{ course.provider }}</span>
+                            <span class="text-xs text-amber-500 font-bold"><i class="fa-solid fa-star mr-1"></i>{{ course.rating }}</span>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">{{ course.title }}</h4>
+                        <p class="text-xs text-slate-500">{{ course.level_name }} • {{ course.duration_hours }} Hours</p>
+                    </div>
+                    <a href="{{ course.official_url }}" target="_blank" class="shrink-0 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">
+                        Official Link <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

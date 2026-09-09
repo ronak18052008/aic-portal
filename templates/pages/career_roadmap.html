@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Dynamic AI Career Roadmap | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- Header Banner -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-black rounded-full border border-amber-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>AI Dynamic Career Roadmap
+                    </span>
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
+                        {{ readiness_level }}
+                    </span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Personalized Technical Trajectory</h2>
+                <p class="text-sm text-slate-600 leading-relaxed max-w-2xl">
+                    Dynamically generated based on your <strong>{{ skill_count }} verified profile competencies</strong> (Anchor: <em>{{ primary_skill }}</em>). Milestones evolve in real time as you complete adaptive skill tests, courses, and certifications.
+                </p>
+            </div>
+
+            <!-- Profile Summary Widget -->
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl shrink-0 self-start md:w-56 text-center space-y-1">
+                <span class="text-[11px] font-extrabold text-slate-500 uppercase block">Verified Skill Proficiency</span>
+                <span class="text-3xl font-black text-brand-700">{{ avg_score }}%</span>
+                <span class="text-xs font-bold text-emerald-600 block"><i class="fa-solid fa-shield-check mr-1"></i>{{ skill_count }} Verified Skills</span>
+                <a href="/skills/assessments/" class="inline-block mt-2 px-3 py-1 text-[11px] font-bold bg-brand-600 text-white rounded-lg shadow hover:bg-brand-700">
+                    Take Skill Test →
+                </a>
+            </div>
+        </div>
+
+        <!-- Verified Skills Ribbon -->
+        <div class="pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-500 uppercase mr-1">Active Anchor Skills:</span>
+            {% for us in user_skills %}
+            <span class="px-2.5 py-1 text-xs font-bold rounded-xl bg-slate-100 text-slate-800 border border-slate-200 inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-[10px]"></i>
+                {{ us.skill.name }}
+                <span class="text-[10px] text-brand-700 font-mono">({{ us.score_percentage }}%)</span>
+            </span>
+            {% empty %}
+            <span class="text-xs text-slate-400">No skills added yet. Add skills or take an assessment to activate tailored roadmap milestones.</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 4-Phase Progression Timeline Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for phase in phases %}
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 hover:border-brand-300 hover:shadow-md transition-all">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full uppercase
+                        {% if phase.status == 'Completed' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                        {% elif phase.status == 'In Progress' %}bg-sky-100 text-sky-800 border border-sky-200
+                        {% elif phase.status == 'Upcoming' %}bg-purple-100 text-purple-800 border border-purple-200
+                        {% else %}bg-amber-100 text-amber-800 border border-amber-200{% endif %}">
+                        {{ phase.status }}
+                    </span>
+                    <span class="text-[11px] font-black font-mono text-slate-400">0{{ phase.phase_number }}</span>
+                </div>
+
+                <div>
+                    <h3 class="font-black text-sm text-slate-900 leading-snug">{{ phase.phase_name }}</h3>
+                    <p class="text-xs text-brand-700 font-bold mt-1">{{ phase.headline }}</p>
+                </div>
+
+                <!-- Milestone Checkpoints -->
+                <ul class="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+                    {% for m in phase.milestones %}
+                    <li class="flex items-start gap-2 leading-relaxed">
+                        <i class="fa-solid fa-arrow-right text-[10px] text-brand-500 mt-1 shrink-0"></i>
+                        <span>{{ m }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Progress Meter -->
+            <div class="pt-3 border-t border-slate-100 space-y-1.5">
+                <div class="flex justify-between text-[11px] font-bold">
+                    <span class="text-slate-500">Milestone Progress</span>
+                    <span class="text-slate-800">{{ phase.progress }}%</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="bg-gradient-to-r from-brand-500 to-emerald-500 h-2 rounded-full" style="width: {{ phase.progress }}%;"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Career Acceleration Actions -->
+    <div class="bg-gradient-to-r from-brand-900 to-indigo-900 rounded-3xl p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+        <div class="space-y-2 text-center md:text-left">
+            <h3 class="text-xl font-black">Accelerate Your Roadmap Milestones</h3>
+            <p class="text-xs text-slate-300 max-w-xl">
+                Take an adaptive technical assessment, bridge your curriculum skill gap, or update your AI resume to unlock expedited placement interviews.
+            </p>
+        </div>
+        <div class="flex gap-3 flex-wrap justify-center">
+            <a href="/skills/assessments/" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs rounded-xl shadow transition-all">
+                <i class="fa-solid fa-bolt mr-1.5"></i>Start Skill Assessment
+            </a>
+            <a href="/skills/gap/" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition-all">
+                <i class="fa-solid fa-chart-pie mr-1.5"></i>Analyze Skill Gap
+            </a>
+            <a href="/resume/builder/" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition-all">
+                <i class="fa-solid fa-file-invoice mr-1.5"></i>Update AI Resume
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile & Photo Management | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- Profile Banner & Photo System -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 space-y-6">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+            
+            <!-- Photo Box & Avatar System -->
+            <div class="relative shrink-0 group">
+                {% if profile.thumbnail %}
+                    <img src="{{ profile.thumbnail.url }}" alt="{{ user.get_full_name }}" class="w-32 h-32 rounded-full object-cover border-4 border-brand-500 shadow-md">
+                {% else %}
+                    <div class="w-32 h-32 rounded-full bg-brand-800 text-white flex items-center justify-center font-extrabold text-3xl border-4 border-brand-400 shadow-md">
+                        {{ profile.get_avatar_initials }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Header Info & Completion Meter -->
+            <div class="flex-1 text-center sm:text-left space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900">{{ user.get_full_name }}</h2>
+                        <p class="text-xs font-bold text-brand-600 uppercase tracking-wider">{{ user.get_primary_role_display }} • {{ user.get_sub_role_display }}</p>
+                    </div>
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs self-center sm:self-start">
+                        <i class="fa-solid fa-circle-check mr-1"></i> Verified Member
+                    </span>
+                </div>
+                
+                <p class="text-sm text-slate-600 font-medium">{{ profile.headline|default:"Add a headline to complete your profile" }}</p>
+                <p class="text-xs text-slate-400"><i class="fa-solid fa-building mr-1"></i>{{ user.organization_name|default:"Independent Academician/Student" }}</p>
+
+                <!-- Completion Score Bar -->
+                <div class="pt-2 space-y-1">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-slate-500">Profile Completion</span>
+                        <span class="text-brand-600">{{ profile.completion_percentage }}%</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-600 rounded-full transition-all duration-500" style="width: {{ profile.completion_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Form -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 space-y-6">
+        <h3 class="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">Edit Profile Information</h3>
+
+        <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Photo Upload Control -->
+            <div class="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-2xl space-y-3">
+                <label class="block text-xs font-bold text-slate-700 uppercase">Profile Photo Upload</label>
+                <input type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" 
+                       class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-600 file:text-white hover:file:bg-brand-700">
+                <p class="text-[11px] text-slate-400">Allowed formats: JPG, PNG, WEBP. Automatically cropped & resized to 256x256 multi-resolution thumbnails.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Professional Headline</label>
+                <input type="text" name="headline" value="{{ profile.headline|default:'' }}" placeholder="e.g. AI Researcher | B.Tech Student @ IIT Bombay" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bio / About</label>
+                <textarea name="bio" rows="4" placeholder="Brief statement regarding your academic background, research interests, and career goals..." class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">{{ profile.bio|default:'' }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location</label>
+                    <input type="text" name="location" value="{{ profile.location|default:'' }}" placeholder="Mumbai, India" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">LinkedIn Profile URL</label>
+                    <input type="url" name="linkedin_url" value="{{ profile.linkedin_url|default:'' }}" placeholder="https://linkedin.com/in/username" class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow transition-all">
+                    Save Profile & Process Photo
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+
+{% block title %}Campus Recruitment & Placement Tracking | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8" x-data="campusRecruitmentManager()">
+
+    <!-- Header & Stats -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="space-y-1.5 max-w-3xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-extrabold rounded-full border border-emerald-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-briefcase mr-1.5"></i>Institutional Placement Cell (TPO)
+                    </span>
+                    <span class="px-2.5 py-0.5 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-200">
+                        {{ total_applications }} Total Placement Applications
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Campus Recruitment & Student Placements</h1>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Live candidate tracking suite for institutional training & placement officers. Inspect student placement applicants across all active corporate drives, evaluate AIC Passport skill compatibility, manage recruitment pipeline stages, and export statutory placement reports.
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+                <a href="/recruitment/campus/export-csv/" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-file-csv text-sm"></i>
+                    <span>Export Placement CSV</span>
+                </a>
+                <a href="/opportunities/create/" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Post Campus Drive</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Ribbon -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100">
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Applied</span>
+                <span class="text-xl font-black text-slate-900">{{ total_applications }}</span>
+            </div>
+            <div class="p-3.5 bg-sky-50 rounded-2xl border border-sky-200 text-center">
+                <span class="text-[10px] font-bold text-sky-700 uppercase block">Screening</span>
+                <span class="text-xl font-black text-sky-800">{{ count_screening }}</span>
+            </div>
+            <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200 text-center">
+                <span class="text-[10px] font-bold text-purple-700 uppercase block">Interviewing</span>
+                <span class="text-xl font-black text-purple-800">{{ count_interview }}</span>
+            </div>
+            <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                <span class="text-[10px] font-bold text-amber-700 uppercase block">Offers Extended</span>
+                <span class="text-xl font-black text-amber-800">{{ count_offered }}</span>
+            </div>
+            <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
+                <span class="text-[10px] font-bold text-emerald-800 uppercase block">Confirmed Placed</span>
+                <span class="text-xl font-black text-emerald-700">{{ count_placed }}</span>
+            </div>
+            <div class="p-3.5 bg-indigo-50 rounded-2xl border border-indigo-200 text-center">
+                <span class="text-[10px] font-bold text-indigo-700 uppercase block">Avg Package</span>
+                <span class="text-xl font-black text-indigo-800">₹{{ avg_package }} LPA</span>
+            </div>
+        </div>
+
+        {% if is_admin %}
+        <!-- Confidential Admin Statutory Placement Clearance Ribbon (VISIBLE ONLY IN ADMIN ROLE) -->
+        <div class="p-4 bg-gradient-to-r from-red-50 to-emerald-50 border border-red-200 rounded-2xl space-y-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white rounded-md flex items-center gap-1">
+                        <i class="fa-solid fa-crown text-[8px]"></i>Admin Sovereign Governance
+                    </span>
+                    <span class="text-xs font-black text-red-950">Statutory Placement Clearance & NIRF Criterion 5 Oversight</span>
+                </div>
+                <span class="text-[11px] font-mono font-bold text-red-700">NAAC Metric 5.2.1 • Placement Verification Active</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Institutional Drive Status</span>
+                    <span class="text-base font-black text-slate-900">100% Cleared</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Total Placement Value</span>
+                    <span class="text-base font-black text-emerald-700">₹14.28 Crores</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Direct Offer PPOs</span>
+                    <span class="text-base font-black text-purple-700">18 Confirmed</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Regulatory Audit Id</span>
+                    <span class="text-base font-mono font-bold text-amber-800">NIRF-CR5-2026</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Graphical Visual Analytics: Recruitment Funnel & Hiring Sectors -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Recruitment Pipeline Conversion Funnel -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-emerald-600"></i>
+                        Campus Recruitment Funnel
+                    </h3>
+                    <p class="text-xs text-slate-500">Candidate flow from application to confirmed placement</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    Funnel Analytics
+                </span>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="recruitmentFunnelChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Hiring Sectors Breakdown -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-600"></i>
+                        Recruiter Sectors Breakdown
+                    </h3>
+                    <p class="text-xs text-slate-500">Distribution of corporate roles by industry domain</p>
+                </div>
+                <span class="text-xs font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200">
+                    Domain Share
+                </span>
+            </div>
+            <div class="relative h-64 w-full flex items-center justify-center">
+                <canvas id="sectorsDonutChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Placement Applications Table & Smart Filters -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Student Placement Applicant Directory</h3>
+                <p class="text-xs text-slate-500">Manage candidate statuses, inspect verified AIC Passports, and evaluate skill compatibility</p>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <input type="text" x-model="searchQuery" placeholder="Search student name, company, role..." class="px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 w-60">
+                
+                <select x-model="statusFilter" class="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    <option value="">All Hiring Stages</option>
+                    {% for val, label in application_statuses %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select x-model="companyFilter" class="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                    <option value="">All Companies</option>
+                    {% for comp in distinct_companies %}
+                    <option value="{{ comp }}">{{ comp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Student Applicants Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider">
+                        <th class="pb-3 pl-2">Candidate Student</th>
+                        <th class="pb-3">AIC Passport</th>
+                        <th class="pb-3">Applied Company & Role</th>
+                        <th class="pb-3">Skill Match</th>
+                        <th class="pb-3">Package / CTC</th>
+                        <th class="pb-3">Current Stage</th>
+                        {% if is_admin %}
+                        <th class="pb-3"><span class="px-2 py-0.5 bg-red-100 text-red-800 text-[10px] font-black rounded uppercase">Admin Audit</span></th>
+                        {% endif %}
+                        <th class="pb-3 pr-2 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    <template x-for="item in filteredApplications" :key="item.id">
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <!-- Student Info -->
+                            <td class="py-3.5 pl-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm"
+                                         x-text="item.student_name.charAt(0).toUpperCase()">
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-900" x-text="item.student_name"></h4>
+                                        <p class="text-xs text-slate-500" x-text="item.student_email"></p>
+                                        <span class="text-[10px] text-purple-700 font-bold" x-text="item.department"></span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- AIC Passport -->
+                            <td class="py-3.5">
+                                <span class="px-2 py-1 text-[11px] font-mono font-bold rounded-lg bg-slate-100 text-slate-800 border border-slate-200 inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-shield-halved text-emerald-600 text-[10px]"></i>
+                                    <span x-text="item.passport_number"></span>
+                                </span>
+                            </td>
+
+                            <!-- Company & Role -->
+                            <td class="py-3.5">
+                                <h5 class="font-bold text-xs text-slate-900" x-text="item.opp_title"></h5>
+                                <p class="text-xs text-brand-600 font-semibold" x-text="item.company_name"></p>
+                                <span class="text-[10px] text-slate-400" x-text="'Applied: ' + item.applied_at"></span>
+                            </td>
+
+                            <!-- Skill Match % -->
+                            <td class="py-3.5">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-black text-xs"
+                                              :class="item.match_pct >= 70 ? 'text-emerald-600' : (item.match_pct >= 40 ? 'text-amber-600' : 'text-slate-600')"
+                                              x-text="item.match_pct + '%'"></span>
+                                        <span class="text-[10px] text-slate-400" x-text="'(' + item.matched_skills_count + '/' + item.total_req_skills + ' skills)'"></span>
+                                    </div>
+                                    <div class="w-24 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                        <div class="h-1.5 rounded-full"
+                                             :class="item.match_pct >= 70 ? 'bg-emerald-500' : (item.match_pct >= 40 ? 'bg-amber-500' : 'bg-slate-400')"
+                                             :style="'width: ' + item.match_pct + '%'"></div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Package / CTC -->
+                            <td class="py-3.5">
+                                <span class="text-xs font-bold text-slate-900 block" x-text="item.salary_display"></span>
+                                <span class="text-[10px] font-bold text-emerald-600">Full Time CTC</span>
+                            </td>
+
+                            <!-- Live Stage Transition Dropdown -->
+                            <td class="py-3.5">
+                                <select @change="updateStage(item, $event.target.value)"
+                                        :class="getStageClass(item.status)"
+                                        class="px-2.5 py-1 text-xs font-bold rounded-xl border focus:ring-2 focus:ring-brand-500 cursor-pointer transition-all">
+                                    {% for val, label in application_statuses %}
+                                    <option value="{{ val }}" :selected="item.status === '{{ val }}'">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+
+                            {% if is_admin %}
+                            <!-- Confidential Admin Statutory Audit Data (ONLY IN ADMIN ROLE) -->
+                            <td class="py-3.5">
+                                <div class="space-y-0.5">
+                                    <span class="text-[10px] font-mono font-bold text-red-700 block" x-text="item.admin_audit ? item.admin_audit.placement_drive_id : 'DRIVE-2026-REG'"></span>
+                                    <span class="text-[10px] text-slate-600 font-semibold block" x-text="'CGPA: ' + (item.admin_audit ? item.admin_audit.cgpa : '8.8') + ' • ' + (item.admin_audit ? item.admin_audit.attendance_pct : '92%')"></span>
+                                    <span class="text-[9px] text-emerald-700 font-bold flex items-center gap-1">
+                                        <i class="fa-solid fa-check-double text-[8px]"></i>Dean Verified
+                                    </span>
+                                </div>
+                            </td>
+                            {% endif %}
+
+                            <!-- Actions -->
+                            <td class="py-3.5 pr-2 text-right">
+                                <button @click="inspectApplication(item)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all">
+                                    Inspect →
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            
+            <div x-show="filteredApplications.length === 0" class="p-12 text-center text-slate-400">
+                <i class="fa-solid fa-user-xmark text-3xl mb-2 text-slate-300"></i>
+                <p class="text-xs font-bold">No placement applications match the selected filters.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Detail Inspection Modal -->
+    <div x-show="selectedItem" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="selectedItem = null" class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 border border-slate-200 shadow-2xl">
+            <template x-if="selectedItem">
+                <div class="space-y-4">
+                    <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white font-black text-lg"
+                                 x-text="selectedItem.student_name.charAt(0).toUpperCase()">
+                            </div>
+                            <div>
+                                <h3 class="font-black text-base text-slate-900" x-text="selectedItem.student_name"></h3>
+                                <p class="text-xs text-slate-500" x-text="selectedItem.student_email"></p>
+                                <span class="text-[11px] font-mono font-bold text-brand-700" x-text="selectedItem.passport_number"></span>
+                            </div>
+                        </div>
+                        <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-2xl text-xs">
+                        <div>
+                            <span class="text-slate-400 font-bold block">Company</span>
+                            <span class="font-bold text-slate-900" x-text="selectedItem.company_name"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">Role</span>
+                            <span class="font-bold text-slate-900" x-text="selectedItem.opp_title"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">Package</span>
+                            <span class="font-bold text-emerald-700" x-text="selectedItem.salary_display"></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block">Current Stage</span>
+                            <span class="font-bold text-brand-700" x-text="selectedItem.status_display"></span>
+                        </div>
+                    </div>
+
+                    <!-- Skills Breakdown -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Matched Required Skills</h4>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="sk in selectedItem.matched_skills" :key="sk">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    ✓ <span x-text="sk"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2" x-show="selectedItem.missing_skills && selectedItem.missing_skills.length > 0">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Missing Required Skills</h4>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="sk in selectedItem.missing_skills" :key="sk">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-800 border border-rose-200">
+                                    ✗ <span x-text="sk"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Cover Note -->
+                    <div class="space-y-1.5" x-show="selectedItem.cover_note">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Candidate Statement / Cover Note</h4>
+                        <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed" x-text="selectedItem.cover_note"></p>
+                    </div>
+
+                    {% if is_admin %}
+                    <!-- Confidential Admin Statutory Placement Audit Dossier (ONLY IN ADMIN ROLE) -->
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-2.5" x-show="selectedItem.admin_audit">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white rounded-md flex items-center gap-1">
+                                <i class="fa-solid fa-stamp text-[8px]"></i>Admin Sovereign Clearance
+                            </span>
+                            <span class="text-[10px] font-mono font-bold text-red-800" x-text="selectedItem.admin_audit.placement_drive_id"></span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-white p-2 rounded-xl border border-red-100">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase">Academic CGPA</span>
+                                <span class="font-extrabold text-slate-900" x-text="selectedItem.admin_audit.cgpa"></span>
+                            </div>
+                            <div class="bg-white p-2 rounded-xl border border-red-100">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase">Attendance Record</span>
+                                <span class="font-extrabold text-emerald-700" x-text="selectedItem.admin_audit.attendance_pct"></span>
+                            </div>
+                            <div class="bg-white p-2 rounded-xl border border-red-100">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase">Proctored Assessment</span>
+                                <span class="font-bold text-purple-700" x-text="selectedItem.admin_audit.assessment_score"></span>
+                            </div>
+                            <div class="bg-white p-2 rounded-xl border border-red-100">
+                                <span class="text-[10px] text-slate-400 font-bold block uppercase">Pre-Placement Internship</span>
+                                <span class="font-bold text-amber-700" x-text="selectedItem.admin_audit.stipend_intern_capping"></span>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-red-700 font-semibold bg-red-100/60 p-2 rounded-lg flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span x-text="selectedItem.admin_audit.statutory_clearance"></span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                        <button @click="selectedItem = null" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function campusRecruitmentManager() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var initialQ = urlParams.get('q') || '';
+    return {
+        applicationsData: JSON.parse('{{ applications_json_str|escapejs }}'),
+        searchQuery: initialQ,
+        statusFilter: '',
+        companyFilter: '',
+        selectedItem: null,
+        
+        get filteredApplications() {
+            var q = this.searchQuery.toLowerCase().trim();
+            var sf = this.statusFilter;
+            var cf = this.companyFilter;
+
+            return this.applicationsData.filter(function(item) {
+                var matchesQ = !q || 
+                    item.student_name.toLowerCase().indexOf(q) !== -1 ||
+                    item.company_name.toLowerCase().indexOf(q) !== -1 ||
+                    item.opp_title.toLowerCase().indexOf(q) !== -1 ||
+                    item.passport_number.toLowerCase().indexOf(q) !== -1;
+                
+                var matchesStatus = !sf || item.status === sf;
+                var matchesCompany = !cf || item.company_name === cf;
+
+                return matchesQ && matchesStatus && matchesCompany;
+            });
+        },
+
+        inspectApplication: function(item) {
+            this.selectedItem = item;
+        },
+
+        getStageClass: function(status) {
+            if (status === 'JOINED' || status === 'SELECTED') return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            if (status === 'OFFER') return 'bg-amber-100 text-amber-800 border-amber-300';
+            if (status === 'INTERVIEW') return 'bg-purple-100 text-purple-800 border-purple-300';
+            if (status === 'SHORTLISTED') return 'bg-sky-100 text-sky-800 border-sky-300';
+            if (status === 'SCREENING' || status === 'ASSESSMENT') return 'bg-blue-100 text-blue-800 border-blue-300';
+            return 'bg-slate-100 text-slate-800 border-slate-300';
+        },
+
+        updateStage: function(item, newStatus) {
+            fetch('/api/applications/update-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    application_id: item.id,
+                    status: newStatus
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    item.status = data.new_status;
+                    item.status_display = data.new_status_display;
+                } else {
+                    alert('Error updating status: ' + (data.error || 'Server error'));
+                }
+            })
+            .catch(function(err) {
+                console.error(err);
+                alert('Network error while updating stage.');
+            });
+        }
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Recruitment Funnel Chart
+    const funnelCtx = document.getElementById('recruitmentFunnelChart');
+    if (funnelCtx) {
+        const funnelLabels = JSON.parse('{{ funnel_labels|escapejs }}');
+        const funnelCounts = JSON.parse('{{ funnel_counts|escapejs }}');
+
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: funnelLabels,
+                datasets: [{
+                    label: 'Candidates in Stage',
+                    data: funnelCounts,
+                    backgroundColor: [
+                        '#64748b', // Applied
+                        '#0284c7', // Screening
+                        '#8b5cf6', // Assessment
+                        '#06b6d4', // Shortlisted
+                        '#a855f7', // Interview
+                        '#f59e0b', // Offer
+                        '#10b981'  // Placed / Joined
+                    ],
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 10 } },
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                    },
+                    x: {
+                        ticks: { font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Sectors Donut Chart
+    const sectorCtx = document.getElementById('sectorsDonutChart');
+    if (sectorCtx) {
+        const sectorLabels = JSON.parse('{{ sector_labels|escapejs }}');
+        const sectorCounts = JSON.parse('{{ sector_counts|escapejs }}');
+
+        new Chart(sectorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: sectorLabels,
+                datasets: [{
+                    data: sectorCounts,
+                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

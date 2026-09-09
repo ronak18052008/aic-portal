@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ opportunity.title }} — Apply | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    
+    <!-- Opportunity Detail Card -->
+    <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between gap-4">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 text-[10px] font-extrabold rounded-full uppercase
+                        {% if opportunity.opportunity_type == 'JOB' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                        {% elif opportunity.opportunity_type == 'INTERNSHIP' %}bg-purple-100 text-purple-800 border border-purple-200
+                        {% elif opportunity.opportunity_type == 'FELLOWSHIP' %}bg-amber-100 text-amber-800 border border-amber-200
+                        {% elif opportunity.opportunity_type == 'SCHOLARSHIP' %}bg-sky-100 text-sky-800 border border-sky-200
+                        {% else %}bg-slate-100 text-slate-800 border border-slate-200{% endif %}">{{ opportunity.get_opportunity_type_display }}</span>
+                    <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-200">{{ opportunity.get_mode_display }}</span>
+                    {% if opportunity.is_verified %}
+                    <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-shield-halved mr-1"></i>Verified</span>
+                    {% endif %}
+                </div>
+                <h2 class="text-2xl font-black text-slate-900">{{ opportunity.title }}</h2>
+                <p class="text-sm text-slate-600 font-semibold"><i class="fa-solid fa-building mr-1.5 text-brand-500"></i>{{ opportunity.organization_name }}</p>
+                <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1.5"></i>{{ opportunity.city }}, {{ opportunity.state }}, {{ opportunity.country }}</p>
+            </div>
+            <div class="bg-brand-50 border border-brand-200 px-5 py-3 rounded-2xl text-center self-start shrink-0">
+                <span class="text-[10px] font-extrabold uppercase text-brand-600 block">Compensation</span>
+                <span class="text-xl font-black text-brand-900">₹{{ opportunity.stipend_salary|floatformat:0 }}</span>
+                <span class="text-[10px] font-bold text-brand-600 block">{{ opportunity.salary_period }}</span>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="space-y-2">
+            <h3 class="text-xs font-extrabold text-slate-700 uppercase">About This Opportunity</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">{{ opportunity.description }}</p>
+        </div>
+
+        {% if opportunity.responsibilities %}
+        <div class="space-y-2">
+            <h3 class="text-xs font-extrabold text-slate-700 uppercase">Key Responsibilities</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">{{ opportunity.responsibilities }}</p>
+        </div>
+        {% endif %}
+
+        {% if opportunity.eligibility %}
+        <div class="space-y-2">
+            <h3 class="text-xs font-extrabold text-slate-700 uppercase">Eligibility & Requirements</h3>
+            <p class="text-sm text-slate-600 leading-relaxed">{{ opportunity.eligibility }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Required Skills -->
+        {% if required_skills %}
+        <div class="space-y-2">
+            <h3 class="text-xs font-extrabold text-slate-700 uppercase">Required Skills</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in required_skills %}
+                <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-700 border border-slate-200">{{ skill.name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Verification Info -->
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+            <i class="fa-solid fa-shield-halved text-emerald-500 text-lg"></i>
+            <div>
+                <p class="text-xs font-bold text-slate-800">Verification Source</p>
+                <p class="text-xs text-slate-500">{{ opportunity.verification_source }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Section -->
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <h3 class="text-sm font-extrabold text-slate-900"><i class="fa-solid fa-paper-plane mr-2 text-brand-600"></i>Apply for This Position</h3>
+        
+        {% if opportunity.official_apply_url %}
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+            <p class="text-xs text-blue-800 font-semibold mb-3"><i class="fa-solid fa-circle-info mr-1.5"></i>This opportunity is hosted on the employer's official portal. Click below to apply directly.</p>
+            <a href="{{ opportunity.official_apply_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow transition-all">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                Apply on Official Portal →
+            </a>
+        </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            {% if applied %}
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>
+                <p class="text-sm font-bold text-emerald-800">You have already applied for this opportunity.</p>
+            </div>
+            {% else %}
+            <form method="POST" class="space-y-4 pt-2 border-t border-slate-100">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Cover Note / Statement of Purpose</label>
+                    <textarea name="cover_note" rows="4" placeholder="Briefly describe why your skills and experience fit this position..." class="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div class="flex items-center justify-between">
+                    <a href="/search/" class="text-xs font-bold text-slate-500 hover:underline">← Back to Search</a>
+                    <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i>Submit Application
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        {% else %}
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+            <p class="text-xs text-amber-800 font-semibold"><i class="fa-solid fa-user-lock mr-1.5"></i>Sign in to submit your application with your AIC Passport and track its status.</p>
+            <div class="flex gap-3">
+                <a href="/login/?next=/opportunities/{{ opportunity.id }}/apply/" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">Sign In to Apply</a>
+                <a href="/register/" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-brand-600 font-bold text-xs rounded-xl border border-brand-200 shadow-sm transition-all">Create Account</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Back Navigation -->
+    <div class="text-center pb-4">
+        <a href="/search/" class="text-xs font-bold text-slate-400 hover:text-brand-600">← Back to Global Discovery & Search</a>
+    </div>
+
+</div>
+{% endblock %}

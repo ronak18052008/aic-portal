@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+
+{% block title %}Global Discovery & Smart Search | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Search Query Bar -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <form action="/search/" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <input type="text" name="q" value="{{ query }}" placeholder="Natural Language Search (e.g. Free AI online courses, IIT Bombay B.Tech, Python Internships)..." 
+                       class="w-full pl-11 pr-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+            </div>
+            <button type="submit" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-2xl shadow transition-all">
+                Search Ecosystem
+            </button>
+        </form>
+    </div>
+
+    <!-- Main Grid: Faceted Sidebar + Results -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Smart Faceted Filter Sidebar -->
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-6 self-start">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-filter text-brand-600 mr-2"></i>Smart Filters</h3>
+                <a href="/search/" class="text-[11px] font-bold text-slate-400 hover:text-brand-600">Clear All</a>
+            </div>
+
+            <form action="/search/" method="GET" class="space-y-4">
+                <input type="hidden" name="q" value="{{ query }}">
+                <input type="hidden" name="type" value="{{ search_type }}">
+
+                <!-- Institution / University Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Institution / University</label>
+                    <select name="institution" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Institutions</option>
+                        <option value="none" {% if institution_filter == 'none' %}selected{% endif %}>Not Mentioned / Independent</option>
+                        {% for inst in institutions_list %}
+                        <option value="{{ inst.slug }}" {% if institution_filter == inst.slug %}selected{% endif %}>{{ inst.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Education Field Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Education & Skill Field</label>
+                    <select name="field" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Fields</option>
+                        <option value="none" {% if category_filter == 'none' %}selected{% endif %}>Not Mentioned / General</option>
+                        {% for f in fields %}
+                        <option value="{{ f.slug }}" {% if category_filter == f.slug %}selected{% endif %}>{{ f.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Delivery Mode Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Delivery Mode</label>
+                    <select name="mode" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Modes</option>
+                        <option value="ONLINE" {% if mode_filter == 'ONLINE' %}selected{% endif %}>Online / MOOC</option>
+                        <option value="OFFLINE" {% if mode_filter == 'OFFLINE' %}selected{% endif %}>On-Campus / Offline</option>
+                        <option value="HYBRID" {% if mode_filter == 'HYBRID' %}selected{% endif %}>Hybrid</option>
+                        <option value="none" {% if mode_filter == 'none' %}selected{% endif %}>Not Mentioned / Flexible</option>
+                    </select>
+                </div>
+
+                <!-- Country Geography Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Country Geography</label>
+                    <select name="country" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">Global / All Countries</option>
+                        <option value="India" {% if country_filter == 'India' %}selected{% endif %}>India</option>
+                        <option value="United States" {% if country_filter == 'United States' %}selected{% endif %}>United States</option>
+                        <option value="United Kingdom" {% if country_filter == 'United Kingdom' %}selected{% endif %}>United Kingdom</option>
+                        <option value="none" {% if country_filter == 'none' %}selected{% endif %}>Not Mentioned / Open Remote</option>
+                    </select>
+                </div>
+
+                <!-- Verified Toggle -->
+                <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                    <input type="checkbox" id="verified" name="verified" value="1" {% if verified_only %}checked{% endif %} onchange="this.form.submit()" class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="verified" class="text-xs font-bold text-slate-700">Verified Sources Only</label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result Cards & Tab Navigation -->
+        <div class="lg:col-span-3 space-y-6">
+            
+            <!-- Type Tabs with Dynamic Facet Hit Counts -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+                <a href="/search/?q={{ query }}&type=all{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'all' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    All Results ({{ facet_counts.all }})
+                </a>
+                <a href="/search/?q={{ query }}&type=courses{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'courses' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Courses ({{ facet_counts.courses }})
+                </a>
+                <a href="/search/?q={{ query }}&type=programmes{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'programmes' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Programmes ({{ facet_counts.programmes }})
+                </a>
+                <a href="/search/?q={{ query }}&type=institutions{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'institutions' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Institutions ({{ facet_counts.institutions }})
+                </a>
+                <a href="/search/?q={{ query }}&type=jobs{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'jobs' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Jobs ({{ facet_counts.jobs }})
+                </a>
+                <a href="/search/?q={{ query }}&type=internships{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'internships' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Internships ({{ facet_counts.internships }})
+                </a>
+                <a href="/search/?q={{ query }}&type=certifications{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'certifications' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Certifications ({{ facet_counts.certifications }})
+                </a>
+                <a href="/search/?q={{ query }}&type=scholarships{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'scholarships' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Scholarships ({{ facet_counts.scholarships }})
+                </a>
+                <a href="/search/?q={{ query }}&type=projects{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all {% if search_type == 'projects' %}bg-brand-600 text-white shadow{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-50{% endif %}">
+                    Projects & Grants ({{ facet_counts.projects }})
+                </a>
+            </div>
+
+            <!-- Active Filter Badges Bar -->
+            {% if institution_filter or category_filter or mode_filter or country_filter or verified_only %}
+            <div class="flex items-center gap-2 flex-wrap text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <span class="font-bold text-slate-500 text-[11px]">Active Filters:</span>
+                {% if institution_filter %}
+                <span class="px-2.5 py-1 rounded-lg bg-brand-100 text-brand-800 font-bold text-[11px] inline-flex items-center gap-1.5">
+                    <i class="fa-solid fa-university text-[10px]"></i> {{ selected_institution.name|default:institution_filter }}
+                    <a href="/search/?q={{ query }}&type={{ search_type }}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="text-brand-500 hover:text-brand-800 font-black ml-0.5">&times;</a>
+                </span>
+                {% endif %}
+                {% if category_filter %}
+                <span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 font-bold text-[11px] inline-flex items-center gap-1.5">
+                    Field: {{ category_filter }}
+                    <a href="/search/?q={{ query }}&type={{ search_type }}{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="text-blue-500 hover:text-blue-800 font-black ml-0.5">&times;</a>
+                </span>
+                {% endif %}
+                {% if mode_filter %}
+                <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold text-[11px] inline-flex items-center gap-1.5">
+                    Mode: {{ mode_filter }}
+                    <a href="/search/?q={{ query }}&type={{ search_type }}{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="text-amber-500 hover:text-amber-800 font-black ml-0.5">&times;</a>
+                </span>
+                {% endif %}
+                {% if country_filter %}
+                <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-[11px] inline-flex items-center gap-1.5">
+                    {{ country_filter }}
+                    <a href="/search/?q={{ query }}&type={{ search_type }}{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if verified_only %}&verified=1{% endif %}" class="text-emerald-500 hover:text-emerald-800 font-black ml-0.5">&times;</a>
+                </span>
+                {% endif %}
+                {% if verified_only %}
+                <span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 font-bold text-[11px] inline-flex items-center gap-1.5">
+                    Verified Only
+                    <a href="/search/?q={{ query }}&type={{ search_type }}{% if institution_filter %}&institution={{ institution_filter }}{% endif %}{% if category_filter %}&field={{ category_filter }}{% endif %}{% if mode_filter %}&mode={{ mode_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}" class="text-purple-500 hover:text-purple-800 font-black ml-0.5">&times;</a>
+                </span>
+                {% endif %}
+                <a href="/search/?type={{ search_type }}" class="text-[11px] font-bold text-red-500 hover:text-red-700 ml-auto">Clear All Filters</a>
+            </div>
+            {% endif %}
+
+            <!-- Global Empty State if No Results Found across All Facets -->
+            {% if facet_counts.all == 0 %}
+            <div class="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 shadow-sm">
+                <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-lg font-black text-slate-900">No matching records found</h3>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">There are no courses, programmes, institutions, opportunities, or certifications strictly matching your selected filters.</p>
+                </div>
+                <div class="pt-2">
+                    <a href="/search/?type={{ search_type }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-arrows-rotate"></i> Reset All Filters
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Degree Programmes Section -->
+            {% if search_type == 'programmes' or search_type == 'all' and facet_counts.programmes > 0 %}
+            <div class="space-y-4">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Degree & Diploma Programmes ({{ facet_counts.programmes }})</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for prog in programmes %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 shadow-sm space-y-3 flex flex-col justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2 text-xs">
+                                <span class="px-2 py-0.5 rounded font-extrabold bg-brand-100 text-brand-800 uppercase">{{ prog.get_programme_type_display }}</span>
+                                <span class="text-slate-500 font-bold"><i class="fa-solid fa-university mr-1"></i>{{ prog.institution.name }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">{{ prog.title }}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2">{{ prog.description }}</p>
+                            <p class="text-xs text-slate-600 font-semibold pt-1">Duration: {{ prog.duration_months }} Months • Credits: {{ prog.credits }}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-600">₹{{ prog.cost|floatformat:0 }} {{ prog.currency }}</span>
+                            <a href="{{ prog.official_url }}" target="_blank" class="text-xs font-bold text-brand-600 hover:underline">
+                                Official Admissions <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                        No degree programmes found matching the query.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Internships Section -->
+            {% if search_type == 'internships' or search_type == 'all' and facet_counts.internships > 0 %}
+            <div class="space-y-4">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Internship & Apprenticeship Opportunities ({{ facet_counts.internships }})</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    {% for intern in internships %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-purple-400 shadow-sm space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-purple-100 text-purple-800 uppercase">Paid Internship</span>
+                                <h4 class="text-base font-bold text-slate-900 mt-1">{{ intern.title }}</h4>
+                                <p class="text-xs text-slate-600 font-semibold">{{ intern.organization_name }} • {{ intern.city }}, {{ intern.country }}</p>
+                            </div>
+                            <span class="text-xs font-bold text-purple-700 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 self-start sm:self-center">
+                                ₹{{ intern.stipend_salary|floatformat:0 }} {{ intern.salary_period }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-600">{{ intern.description }}</p>
+                        <div class="flex items-center justify-between pt-2">
+                            <span class="text-xs font-semibold text-slate-400"><i class="fa-solid fa-laptop-code mr-1"></i>{{ intern.get_mode_display }}</span>
+                            <a href="/opportunities/{{ intern.id }}/apply/" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow">
+                                Apply for Internship →
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
+                        No internships found matching the query.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Universities & Institutions Section -->
+            {% if search_type == 'institutions' or search_type == 'all' and facet_counts.institutions > 0 %}
+            <div class="space-y-4">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Universities & Higher Education Institutions ({{ facet_counts.institutions }})</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for inst in institutions %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 shadow-sm space-y-3 flex flex-col justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="px-2 py-0.5 rounded font-extrabold bg-blue-100 text-blue-800 uppercase">{{ inst.get_institution_type_display }}</span>
+                                <span class="font-bold text-emerald-600"><i class="fa-solid fa-award mr-1"></i>NIRF Rank #{{ inst.nirf_rank }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">{{ inst.name }}</h4>
+                            <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i>{{ inst.city }}, {{ inst.state }}, {{ inst.country }}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-600">NAAC {{ inst.naac_grade }}</span>
+                            <a href="{{ inst.website }}" target="_blank" class="text-xs font-bold text-brand-600 hover:underline">
+                                Official Website <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                        No institutions found matching the query.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Annotated Jobs Section with AI Explainable Matching -->
+            {% if search_type == 'jobs' or search_type == 'all' and facet_counts.jobs > 0 %}
+            <div class="space-y-4">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Recruitment & Jobs ({{ facet_counts.jobs }})</h3>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    {% for job_data in jobs_annotated %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 shadow-sm space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-emerald-100 text-emerald-800 uppercase">Verified Job</span>
+                                <h4 class="text-base font-bold text-slate-900 mt-1">{{ job_data.item.title }}</h4>
+                                <p class="text-xs text-slate-600 font-semibold">{{ job_data.item.organization_name }} • {{ job_data.item.city }}, {{ job_data.item.country }}</p>
+                            </div>
+
+                            <!-- Explainable Match Percentage Badge -->
+                            <div class="bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-xl text-center shrink-0">
+                                <span class="text-[10px] font-extrabold uppercase text-brand-700 block">AI Match</span>
+                                <span class="text-lg font-black text-brand-900">{{ job_data.match_pct }}%</span>
+                            </div>
+                        </div>
+
+                        <!-- Match Skills Breakdown -->
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <span class="font-bold text-slate-500">Matched Skills:</span>
+                            {% for ms in job_data.matched_skills %}
+                            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-semibold text-[11px]"><i class="fa-solid fa-check mr-1"></i>{{ ms.name }}</span>
+                            {% empty %}
+                            <span class="text-slate-400 text-[11px]">No skill match yet</span>
+                            {% endfor %}
+
+                            {% if job_data.missing_skills %}
+                            <span class="font-bold text-slate-500 ml-2">Skill Gap:</span>
+                            {% for miss in job_data.missing_skills %}
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-semibold text-[11px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ miss.name }}</span>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <span class="text-xs font-bold text-emerald-600">₹{{ job_data.item.stipend_salary|floatformat:0 }} {{ job_data.item.salary_period }}</span>
+                            <a href="/opportunities/{{ job_data.item.id }}/apply/" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow">
+                                Apply with Verified Passport →
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
+                        No exact job matches found for current query. Try broadening your field or location filters.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Courses Section -->
+            {% if search_type == 'courses' or search_type == 'all' and facet_counts.courses > 0 %}
+            <div class="space-y-4">
+                <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Global Courses & MOOCs ({{ facet_counts.courses }})</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for course in courses %}
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-brand-400 shadow-sm space-y-2 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="px-2 py-0.5 rounded font-extrabold bg-sky-100 text-sky-800">{{ course.provider }}</span>
+                                <span class="font-bold text-amber-500"><i class="fa-solid fa-star mr-1"></i>{{ course.rating }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-2">{{ course.title }}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2 mt-1">{{ course.description }}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700">{% if course.price > 0 %}₹{{ course.price }}{% else %}Free{% endif %}</span>
+                            <a href="{{ course.official_url }}" target="_blank" class="text-xs font-bold text-brand-600 hover:underline">
+                                Official Link <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Professional & Industry Certifications Section -->
+            {% if search_type == 'certifications' or search_type == 'all' and facet_counts.certifications > 0 %}
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Industry & Professional Certifications ({{ facet_counts.certifications }})</h3>
+                    <a href="/certifications/" class="text-xs font-bold text-brand-600 hover:underline">Full Certifications Catalog →</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for cert in certifications %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 hover:shadow-md shadow-sm space-y-3 flex flex-col justify-between transition-all">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs flex-wrap gap-2">
+                                <span class="px-2.5 py-0.5 rounded font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide text-[10px]">{{ cert.issuing_organization }}</span>
+                                {% if cert.credential_code %}
+                                <span class="px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-700 text-[10px] border border-slate-200">{{ cert.credential_code }}</span>
+                                {% endif %}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{{ cert.get_level_display }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-1">{{ cert.title }}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-2">{{ cert.description }}</p>
+
+                            <!-- Skills Covered -->
+                            {% if cert.skills_covered.all %}
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                {% for sk in cert.skills_covered.all %}
+                                <span class="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-semibold text-slate-600">{{ sk.name }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="text-[11px] text-slate-400 space-y-0.5 pt-1">
+                                <p><i class="fa-solid fa-clock mr-1 text-slate-400"></i>{{ cert.duration_minutes }} Mins • {{ cert.exam_format }}</p>
+                                <p><i class="fa-solid fa-calendar-check mr-1 text-slate-400"></i>Validity: {{ cert.validity_years }} Years • {{ cert.verification_source }}</p>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-slate-900">{% if cert.cost > 0 %}₹{{ cert.cost|floatformat:0 }} {{ cert.currency }}{% else %}Free / Sponsored{% endif %}</span>
+                            <a href="{{ cert.official_verify_url }}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                                Register / Syllabus <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                        No certifications found matching the current query.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Real Government & Global Scholarships Section -->
+            {% if search_type == 'scholarships' or search_type == 'all' and facet_counts.scholarships > 0 %}
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">National & Global Scholarships ({{ facet_counts.scholarships }})</h3>
+                    <span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-shield-halved mr-1"></i>Verified Grants</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for sch in scholarships %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-amber-400 hover:shadow-md shadow-sm space-y-3 flex flex-col justify-between transition-all">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs flex-wrap gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full font-extrabold bg-amber-100 text-amber-900 uppercase text-[10px]">{{ sch.organization_name }}</span>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">{{ sch.city|default:"National" }}, {{ sch.country }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-1">{{ sch.title }}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-3">{{ sch.description }}</p>
+                            {% if sch.field %}
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">{{ sch.field.name }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-black text-brand-900">
+                                {% if sch.stipend_salary > 0 %}
+                                    {% if sch.currency == 'INR' %}₹{% elif sch.currency == 'USD' %}${% elif sch.currency == 'GBP' %}£{% else %}€{% endif %}{{ sch.stipend_salary|floatformat:0 }} {{ sch.salary_period }}
+                                {% else %}
+                                    Full Tuition Waiver / Grant
+                                {% endif %}
+                            </span>
+                            {% if sch.official_apply_url %}
+                            <a href="{{ sch.official_apply_url }}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                                Official Portal <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                            {% else %}
+                            <a href="/opportunities/{{ sch.id }}/apply/" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                                Apply Now →
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                        No scholarships found matching your filters. Try selecting 'All Fields' or 'All Institutions'.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Research Projects & Industry Grants Section -->
+            {% if search_type == 'projects' or search_type == 'all' and facet_counts.projects > 0 %}
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400">Research Collaborations & Industry Grants ({{ facet_counts.projects }})</h3>
+                    <a href="/research/" class="text-xs font-bold text-brand-600 hover:underline">All Research Initiatives →</a>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for proj in projects %}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-emerald-400 hover:shadow-md shadow-sm space-y-3 flex flex-col justify-between transition-all">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs flex-wrap gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full font-extrabold bg-emerald-100 text-emerald-900 uppercase text-[10px]">{{ proj.organization_name }}</span>
+                                <span class="text-xs font-bold text-slate-500">{{ proj.city }}, {{ proj.country }}</span>
+                            </div>
+                            <h4 class="font-bold text-sm text-slate-900 mt-1">{{ proj.title }}</h4>
+                            <p class="text-xs text-slate-500 line-clamp-3">{{ proj.description }}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-xs font-black text-emerald-700">
+                                {% if proj.stipend_salary > 0 %}
+                                    ₹{{ proj.stipend_salary|floatformat:0 }} {{ proj.salary_period }}
+                                {% else %}
+                                    Collaborative Open Grant
+                                {% endif %}
+                            </span>
+                            <a href="/opportunities/{{ proj.id }}/apply/" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                                Participate / Apply →
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                        No research projects found matching the current query.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

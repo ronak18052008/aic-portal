@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <h2 class="text-xl font-black text-slate-900"><i class="fa-solid fa-bell text-brand-600 mr-2"></i>Notifications</h2>
+        <p class="text-xs text-slate-500">Real-time alerts for opportunities, AIC Passport updates, and mentorship.</p>
+    </div>
+
+    <div class="space-y-3">
+        {% for n in notifications %}
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between">
+            <div class="space-y-1">
+                <span class="px-2 py-0.5 bg-brand-50 text-brand-700 text-[10px] font-bold rounded">{{ n.notification_type }}</span>
+                <h4 class="font-bold text-sm text-slate-900">{{ n.title }}</h4>
+                <p class="text-xs text-slate-600">{{ n.message }}</p>
+                <span class="text-[10px] text-slate-400 block">{{ n.created_at|date:"M d, Y H:i" }}</span>
+            </div>
+            {% if n.link %}
+            <a href="{{ n.link }}" class="shrink-0 text-xs font-bold text-brand-600 hover:underline">View →</a>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs">
+            No notifications at this time.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

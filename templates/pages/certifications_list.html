@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Industry Certifications Directory | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Page Header -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900"><i class="fa-solid fa-certificate text-brand-600 mr-2"></i>Global Industry Certifications</h1>
+                <p class="text-xs text-slate-500 mt-1">Browse and verify {{ total_count }} industry-recognized credentials from AWS, Google, Microsoft, Cisco, CompTIA, NPTEL & global authorities</p>
+            </div>
+            <form action="/certifications/" method="GET" class="flex gap-2 w-full sm:w-auto">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search certifications, issuers, codes..." class="flex-1 sm:w-64 px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow transition-all"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Grid: Smart Filters + Results -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Smart Filters Sidebar -->
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-5 self-start">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-filter text-brand-600 mr-2"></i>Smart Filters</h3>
+                <a href="/certifications/" class="text-[11px] font-bold text-slate-400 hover:text-brand-600">Clear All</a>
+            </div>
+
+            <form action="/certifications/" method="GET" class="space-y-4">
+                <input type="hidden" name="q" value="{{ query }}">
+
+                <!-- Education Field Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Discipline & Field</label>
+                    <select name="field" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                        <option value="">All Fields</option>
+                        {% for f in fields %}
+                        <option value="{{ f.slug }}" {% if field_filter == f.slug %}selected{% endif %}>{{ f.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Credential Level Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Certification Level</label>
+                    <select name="level" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Levels</option>
+                        {% for val, lbl in level_choices %}
+                        <option value="{{ val }}" {% if level_filter == val %}selected{% endif %}>{{ lbl }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Issuing Organization Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Issuing Organization</label>
+                    <select name="org" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Organizations</option>
+                        {% for org in organizations %}
+                        <option value="{{ org }}" {% if org_filter == org %}selected{% endif %}>{{ org }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Verified Toggle -->
+                <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                    <input type="checkbox" id="verified" name="verified" value="1" {% if verified_only %}checked{% endif %} onchange="this.form.submit()" class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="verified" class="text-xs font-bold text-slate-700">Official Issuing Bodies Only</label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Certifications Results Grid -->
+        <div class="lg:col-span-3 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <p class="text-xs font-bold text-slate-500">Showing {{ total_count }} certification{{ total_count|pluralize }}</p>
+                <div class="flex gap-2 flex-wrap items-center">
+                    {% if field_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-brand-100 text-brand-700 border border-brand-200">Field: {{ field_filter }} <a href="/certifications/?q={{ query }}&level={{ level_filter }}&org={{ org_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-brand-400 hover:text-brand-700">&times;</a></span>{% endif %}
+                    {% if level_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Level: {{ level_filter }} <a href="/certifications/?q={{ query }}&field={{ field_filter }}&org={{ org_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-emerald-400 hover:text-emerald-700">&times;</a></span>{% endif %}
+                    {% if org_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">{{ org_filter }} <a href="/certifications/?q={{ query }}&field={{ field_filter }}&level={{ level_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-indigo-400 hover:text-indigo-700">&times;</a></span>{% endif %}
+                    {% if verified_only %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200">Verified Bodies Only <a href="/certifications/?q={{ query }}&field={{ field_filter }}&level={{ level_filter }}&org={{ org_filter }}" class="ml-1 text-purple-400 hover:text-purple-700">&times;</a></span>{% endif %}
+                    {% if field_filter or level_filter or org_filter or verified_only %}
+                    <a href="/certifications/" class="text-[11px] font-bold text-red-500 hover:text-red-700 ml-2">Clear All</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for cert in certifications %}
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 hover:shadow-md shadow-sm space-y-3 flex flex-col justify-between transition-all">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-xs flex-wrap gap-2">
+                            <span class="px-2.5 py-0.5 rounded font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wide text-[10px]">{{ cert.issuing_organization }}</span>
+                            {% if cert.credential_code %}
+                            <span class="px-2 py-0.5 rounded font-mono font-bold bg-slate-100 text-slate-700 text-[10px] border border-slate-200">{{ cert.credential_code }}</span>
+                            {% endif %}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{{ cert.get_level_display }}</span>
+                        </div>
+                        
+                        <h4 class="font-bold text-base text-slate-900 mt-1">{{ cert.title }}</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">{{ cert.description }}</p>
+
+                        <!-- Skills Covered -->
+                        {% if cert.skills_covered.all %}
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            {% for sk in cert.skills_covered.all %}
+                            <span class="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-semibold text-slate-600">{{ sk.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="text-[11px] text-slate-400 space-y-0.5 pt-1 border-t border-slate-50">
+                            <p><i class="fa-solid fa-clock mr-1 text-slate-400"></i>{{ cert.duration_minutes }} Mins • {{ cert.exam_format }}</p>
+                            <p><i class="fa-solid fa-calendar-check mr-1 text-slate-400"></i>Validity: {{ cert.validity_years }} Years • <span class="text-emerald-600 font-semibold">{{ cert.verification_source }}</span></p>
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-slate-900">
+                            {% if cert.cost > 0 %}
+                            ₹{{ cert.cost|floatformat:0 }} {{ cert.currency }}
+                            {% else %}
+                            Free / Sponsored
+                            {% endif %}
+                        </span>
+                        <a href="{{ cert.official_verify_url }}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                            Register / Syllabus <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                    <i class="fa-solid fa-certificate text-3xl text-slate-300 mb-3"></i>
+                    <p class="font-bold">No certifications found matching your filters.</p>
+                    <p class="mt-1">Try broadening your search criteria or <a href="/certifications/" class="text-brand-600 font-bold hover:underline">clear all filters</a>.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

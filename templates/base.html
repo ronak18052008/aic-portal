@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AIC PORTAL | Global Academia-Industry Collaboration Platform{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0a3654',
+                        },
+                        accent: {
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Alpine.js & HTMX CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Chart.js CDN for Modern Interactive Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        .gradient-brand {
+            background: linear-gradient(135deg, #0a3654 0%, #0369a1 50%, #0284c7 100%);
+        }
+        /* Calibrate baseline typography site-wide to 17.5px */
+        html {
+            font-size: 17.5px;
+        }
+        body {
+            font-size: 17.5px;
+            line-height: 1.6;
+        }
+        /* Proportional scaling for small utility classes */
+        .text-\[10px\], .text-\[11px\], .text-\[8px\] {
+            font-size: 0.8333rem !important; /* ~14.6px */
+            line-height: 1.4rem !important;
+        }
+        .text-xs {
+            font-size: 0.8889rem !important; /* ~15.5px */
+            line-height: 1.5rem !important;
+        }
+        .text-sm {
+            font-size: 0.9444rem !important; /* ~16.5px */
+            line-height: 1.55rem !important;
+        }
+        .text-base {
+            font-size: 1rem !important; /* 17.5px */
+            line-height: 1.65rem !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full flex flex-col font-sans" x-data="{ sidebarOpen: false, sidebarCollapsed: false }">
+
+    {% include 'components/header.html' %}
+
+    <div class="flex-1 flex overflow-hidden">
+        {% if user.is_authenticated %}
+            {% include 'components/sidebar.html' %}
+        {% endif %}
+
+        <main class="flex-1 overflow-y-auto flex flex-col justify-between bg-slate-50">
+            <div class="p-4 md:p-6 lg:p-8 flex-1">
+                {% block content %}{% endblock %}
+            </div>
+            
+            {% include 'components/footer.html' %}
+        </main>
+    </div>
+
+    {% include 'components/chatbot_widget.html' %}
+
+    <!-- Session Lifecycle & Landing Page Initialization -->
+    <script>
+    (function() {
+        // Track whether this browser window/session has active intra-site navigation
+        const sessionActiveKey = 'aic_browser_session_active';
+        
+        // If window is newly opened (no session storage flag) and user landed on a deep sub-page directly
+        if (!sessionStorage.getItem(sessionActiveKey)) {
+            sessionStorage.setItem(sessionActiveKey, 'true');
+            // If the user reopened the browser or closed the window previously and was restored to an inner page
+            const currentPath = window.location.pathname;
+            // Public verify links or shared links can be viewed directly; internal app pages reset to landing page on clean reopen
+            const isSharedPublicPath = currentPath.startsWith('/passport/verify/');
+            if (currentPath !== '/' && !isSharedPublicPath && performance && performance.navigation) {
+                // If navigation type is TYPE_NAVIGATE (fresh URL open / browser restart) rather than reload/back
+                const navEntry = (performance.getEntriesByType && performance.getEntriesByType("navigation")[0]);
+                const isFreshNavigate = navEntry ? navEntry.type === 'navigate' : (performance.navigation.type === 0);
+                if (isFreshNavigate && document.referrer === '') {
+                    window.location.replace('/');
+                }
+            }
+        }
+    })();
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

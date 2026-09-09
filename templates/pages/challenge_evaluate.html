@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Evaluate Submissions — {{ challenge.title }} | AIC Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <a href="/challenges/{{ challenge.slug }}/" class="text-xs text-brand-600 font-bold inline-flex items-center gap-1">
+        <i class="fa-solid fa-arrow-left"></i> {{ challenge.title }}
+      </a>
+      <h1 class="text-2xl font-black text-slate-900 mt-1">Submission Evaluation Desk</h1>
+      <p class="text-slate-500 text-xs font-medium">{{ submissions_data|length }} final submissions delivered for evaluation</p>
+    </div>
+    <a href="/challenges/{{ challenge.slug }}/pipeline/" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
+      <i class="fa-solid fa-filter-circle-dollar mr-1"></i> Talent Pipeline Funnel
+    </a>
+  </div>
+
+  {% for sd in submissions_data %}
+  {% with sub=sd.submission eval=sd.evaluation %}
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <h3 class="font-black text-slate-900 text-base">{{ sub.title }}</h3>
+        <p class="text-xs text-slate-500 font-medium">
+          Author: <strong class="text-slate-800">{{ sub.participant.student.get_full_name }}</strong>
+          ({{ sub.participant.student.email }}) • {{ sub.submitted_at|date:"d M Y, H:i" }}
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        {% if sub.github_url %}
+        <a href="{{ sub.github_url }}" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition">
+          <i class="fa-brands fa-github mr-1"></i> GitHub Repo
+        </a>
+        {% endif %}
+        {% if sub.demo_url %}
+        <a href="{{ sub.demo_url }}" target="_blank" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold transition">
+          <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Live Demo
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="px-6 pb-6 space-y-5">
+      <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs text-slate-700 leading-relaxed">
+        {{ sub.description }}
+      </div>
+
+      <!-- Evaluation Scoring Form -->
+      <div>
+        <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider mb-2.5">Evaluation Rubric (Weighted 0-100)</h4>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Technical Quality (35%)</label>
+            <input type="number" min="0" max="100" data-field="technical" value="{% if eval %}{{ eval.technical_score }}{% else %}80{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Problem Understanding (20%)</label>
+            <input type="number" min="0" max="100" data-field="problem" value="{% if eval %}{{ eval.problem_score }}{% else %}80{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Innovation &amp; Creativity (20%)</label>
+            <input type="number" min="0" max="100" data-field="innovation" value="{% if eval %}{{ eval.innovation_score }}{% else %}75{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Implementation Completeness (10%)</label>
+            <input type="number" min="0" max="100" data-field="implementation" value="{% if eval %}{{ eval.implementation_score }}{% else %}80{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Documentation &amp; Reproducibility (8%)</label>
+            <input type="number" min="0" max="100" data-field="documentation" value="{% if eval %}{{ eval.documentation_score }}{% else %}75{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+          <div>
+            <label class="text-[11px] font-bold text-slate-600 block">Presentation / Demo (7%)</label>
+            <input type="number" min="0" max="100" data-field="presentation" value="{% if eval %}{{ eval.presentation_score }}{% else %}75{% endif %}"
+                   class="score-input w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold mt-1" data-sub="{{ sub.id }}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills to Verify in Student Genome -->
+      <div>
+        <label class="text-xs font-black uppercase text-slate-700 tracking-wider mb-2 block">
+          <i class="fa-solid fa-award text-brand-600 mr-1"></i> Verify Demonstrated Skills in Student Genome
+        </label>
+        <div class="flex flex-wrap gap-2">
+          {% for node in skill_nodes %}
+          <label class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl cursor-pointer text-xs font-bold text-slate-700">
+            <input type="checkbox" class="verified-skill accent-emerald-600" value="{{ node.id }}" data-sub="{{ sub.id }}"
+                   {% if eval and node in eval.skills_verified.all %}checked{% endif %}>
+            {{ node.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Feedback -->
+      <div>
+        <label class="text-xs font-black uppercase text-slate-700 tracking-wider mb-1 block">Feedback to Student</label>
+        <textarea class="feedback-area w-full px-4 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:ring-2 focus:ring-brand-300 focus:outline-none"
+                  rows="2" data-sub="{{ sub.id }}"
+                  placeholder="Provide constructive feedback and highlights of their work...">{% if eval %}{{ eval.feedback }}{% endif %}</textarea>
+      </div>
+
+      <!-- Footer submit -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div class="text-sm font-bold text-slate-700">
+          {% if eval %}
+          Evaluated Grade: <span class="text-emerald-600 font-black text-lg">{{ eval.total_score }}/100</span>
+          {% else %}
+          <span class="text-amber-600 font-bold text-xs"><i class="fa-solid fa-clock mr-1"></i>Pending Evaluation</span>
+          {% endif %}
+        </div>
+        <button type="button" onclick="saveEval('{{ sub.id }}')"
+                class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-sm shadow transition">
+          {% if eval %}Update Evaluation{% else %}Save &amp; Verify Skills{% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+  {% empty %}
+  <div class="text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm">
+    <span class="text-5xl block mb-3">📭</span>
+    <h3 class="font-bold text-slate-800">No Final Submissions Yet</h3>
+    <p class="text-slate-500 text-xs mt-1">Students enrolled in this challenge have not completed final submissions.</p>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script>
+function saveEval(subId) {
+  const inputs = document.querySelectorAll(`.score-input[data-sub="${subId}"]`);
+  const scores = {};
+  inputs.forEach(inp => scores[inp.dataset.field] = parseInt(inp.value) || 0);
+
+  const verified = [];
+  document.querySelectorAll(`.verified-skill[data-sub="${subId}"]:checked`).forEach(cb => verified.push(cb.value));
+
+  const feedback = document.querySelector(`.feedback-area[data-sub="${subId}"]`).value;
+
+  fetch('/api/challenges/evaluate/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ submission_id: subId, ...scores, verified_skills: verified, feedback })
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      alert(`Evaluation saved! Total score: ${data.total_score}/100. Student genome verified.`);
+      location.reload();
+    } else {
+      alert(data.error || 'Failed to save evaluation.');
+    }
+  });
+}
+</script>
+{% endblock %}

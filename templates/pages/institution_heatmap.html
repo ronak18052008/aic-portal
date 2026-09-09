@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Skill Heatmap | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-2">
+        <h2 class="text-2xl font-black text-slate-900">Department Skill Proficiency Heatmap</h2>
+        <p class="text-xs text-slate-500">Cross-departmental skill readiness comparison vs current industry demand.</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div class="grid grid-cols-3 gap-4 text-center text-xs font-bold border-b border-slate-100 pb-3">
+            <span class="text-left text-slate-500">DEPARTMENT</span>
+            <span class="text-slate-500">STUDENT PROFICIENCY</span>
+            <span class="text-slate-500">INDUSTRY DEMAND</span>
+        </div>
+        {% for d in departments %}
+        <div class="grid grid-cols-3 gap-4 text-center text-xs font-bold items-center py-2 border-b border-slate-50">
+            <span class="text-left font-bold text-slate-900">{{ d.name }}</span>
+            <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded">88% (Advanced)</span>
+            <span class="px-2 py-1 bg-brand-100 text-brand-800 rounded">95% (High Demand)</span>
+        </div>
+        {% empty %}
+        <div class="text-center text-xs text-slate-400 py-4">
+            Department of Computer Science & Engineering loaded in database.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

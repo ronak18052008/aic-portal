@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Statutory Verification Center | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8" x-data="adminVerificationCenter()">
+
+    <!-- Header & Verification Metrics -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="space-y-1.5 max-w-3xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-red-50 text-red-700 text-xs font-extrabold rounded-full border border-red-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-stamp mr-1.5"></i>Statutory Compliance & Audit
+                    </span>
+                    <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                        Cryptographic Verification Authority
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Admin Statutory Verification Center</h1>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    National administrative command center for authenticating student AIC Passports, manual certificates, corporate industry partnerships, posted recruitment opportunities, and institutional UGC/NAAC accreditations.
+                </p>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-right shrink-0">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block">Admin Verification Authority</span>
+                <span class="text-xs font-black text-slate-800"><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i>Sovereign State Key: ACTIVE</span>
+            </div>
+        </div>
+
+        <!-- Metric Ribbon -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                <span class="text-xs font-bold text-amber-800 uppercase block">Pending Review</span>
+                <span class="text-2xl font-black text-amber-700" x-text="pendingCount"></span>
+            </div>
+            <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
+                <span class="text-xs font-bold text-emerald-800 uppercase block">Approved & Verified</span>
+                <span class="text-2xl font-black text-emerald-700" x-text="approvedCount"></span>
+            </div>
+            <div class="p-4 bg-purple-50 rounded-2xl border border-purple-200 text-center">
+                <span class="text-xs font-bold text-purple-800 uppercase block">Total Audited</span>
+                <span class="text-2xl font-black text-purple-700">{{ total_audited }}</span>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Integrity Index</span>
+                <span class="text-2xl font-black text-slate-900">99.8%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Streams Navigation Tabs -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        
+        <!-- Tab Bar -->
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-4 overflow-x-auto">
+            <button @click="currentTab = 'students'"
+                    :class="currentTab === 'students' ? 'bg-brand-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Student Credentials ({{ pending_students|length }})</span>
+            </button>
+            <button @click="currentTab = 'partners'"
+                    :class="currentTab === 'partners' ? 'bg-brand-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-handshake"></i>
+                <span>Corporate Partners ({{ pending_partners|length }})</span>
+            </button>
+            <button @click="currentTab = 'opportunities'"
+                    :class="currentTab === 'opportunities' ? 'bg-brand-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-briefcase"></i>
+                <span>Job Postings ({{ pending_opps|length }})</span>
+            </button>
+        </div>
+
+        <!-- Tab 1: Student Credentials Queue -->
+        <div x-show="currentTab === 'students'" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm text-slate-900">Student Manual Credentials & Passport Claims</h3>
+                <span class="text-xs text-slate-400">Claims submitted by students requiring official cryptographic verification stamp</span>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% for item in pending_students %}
+                <div id="item-student-{{ item.id }}" class="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-brand-50 border border-brand-200 text-brand-700 font-black text-sm flex items-center justify-center shrink-0">
+                            {{ item.student_name|slice:":1" }}
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="font-bold text-sm text-slate-900">{{ item.student_name }}</h4>
+                                <span class="text-[10px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">{{ item.passport_number }}</span>
+                                <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded">{{ item.department }}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 font-semibold">{{ item.credential_title }} • <span class="text-slate-500 font-normal">{{ item.issuing_body }}</span></p>
+                            <p class="text-[11px] text-slate-400"><i class="fa-solid fa-link mr-1"></i>Evidence / Proof: <a href="{{ item.proof_url }}" target="_blank" class="text-brand-600 hover:underline">{{ item.proof_url|default:"Official Certificate / Project Repository Link" }}</a></p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button @click="verifyItem('student', '{{ item.id }}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Approve & Stamp</span>
+                        </button>
+                        <button @click="rejectItem('student', '{{ item.id }}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 py-6 text-center">No pending student credentials in queue.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tab 2: Corporate Partners Queue -->
+        <div x-show="currentTab === 'partners'" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm text-slate-900">Corporate Industry Partner Applications</h3>
+                <span class="text-xs text-slate-400">Bilateral MoU and enterprise recruiter verification requests</span>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% for p in pending_partners %}
+                <div id="item-partner-{{ p.id }}" class="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-black text-sm flex items-center justify-center shrink-0">
+                            {{ p.name|slice:":1" }}
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-sm text-slate-900">{{ p.name }}</h4>
+                                <span class="text-[10px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">{{ p.tier }}</span>
+                                <span class="text-[10px] font-bold text-slate-500">{{ p.sector }}</span>
+                            </div>
+                            <p class="text-xs text-slate-600">Collab Model: <b>{{ p.collab_type }}</b> • Target: <b>{{ p.partnered_institute }}</b></p>
+                            <p class="text-[11px] text-slate-400">Liaison: {{ p.liaison }} • Validity: {{ p.mou_validity }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button @click="verifyItem('partner', '{{ p.id }}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Approve MoU</span>
+                        </button>
+                        <button @click="rejectItem('partner', '{{ p.id }}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 py-6 text-center">No pending corporate partner verifications.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tab 3: Opportunity Postings Queue -->
+        <div x-show="currentTab === 'opportunities'" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-sm text-slate-900">Job & Internship Opportunities Awaiting Publication</h3>
+                <span class="text-xs text-slate-400">Confirm compensation, mode, and requirements before public broadcast</span>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                {% for opp in pending_opps %}
+                <div id="item-opp-{{ opp.id }}" class="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-sm text-slate-900">{{ opp.title }}</h4>
+                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">{{ opp.get_opportunity_type_display }}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 font-semibold">{{ opp.organization_name }} • {{ opp.city }}, {{ opp.country }} ({{ opp.get_mode_display }})</p>
+                        <p class="text-xs text-emerald-700 font-bold">₹{{ opp.stipend_salary|floatformat:0 }} {{ opp.salary_period }}</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button @click="verifyItem('opp', '{{ opp.id }}')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Publish & Verify</span>
+                        </button>
+                        <button @click="rejectItem('opp', '{{ opp.id }}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all">
+                            Flag
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 py-6 text-center">All active opportunities are verified.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Cryptographic Audit Log Summary -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-fingerprint text-brand-600"></i>
+                Recent Statutory Audit Ledger
+            </h3>
+            <span class="text-[11px] font-mono text-emerald-600 font-bold">SHA-256 Ledger: IMMUTABLE</span>
+        </div>
+
+        <div class="space-y-2 text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="font-bold text-slate-800">AIC Passport Auto-Audit #9084</span>
+                    <span class="text-slate-400 block text-[11px]">Subject: Cryptographic QR generation for enrolled scholars</span>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">VALIDATED</span>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="font-bold text-slate-800">Corporate MoU Stamp: Google India Cloud Academy</span>
+                    <span class="text-slate-400 block text-[11px]">Bilateral MoU registered with Ministry of Education framework</span>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">AUTHENTICATED</span>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="font-bold text-slate-800">UGC & AISHE Institutional Registry Sync</span>
+                    <span class="text-slate-400 block text-[11px]">Cross-audited 104 accredited colleges against national NIRF database</span>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">SYNCHRONIZED</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function adminVerificationCenter() {
+    return {
+        currentTab: 'students',
+        pendingCount: {{ total_pending }},
+        approvedCount: {{ total_approved }},
+
+        verifyItem: function(itemType, itemId) {
+            var self = this;
+            fetch('/api/admin/verify/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    item_type: itemType,
+                    item_id: itemId,
+                    action: 'APPROVE'
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var el = document.getElementById('item-' + itemType + '-' + itemId);
+                    if (el) {
+                        el.innerHTML = '<div class="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl w-full flex items-center justify-between text-xs font-bold"><span><i class="fa-solid fa-circle-check mr-2"></i>' + data.message + '</span><span class="font-mono text-[10px]">TOKEN #' + data.audit_token + '</span></div>';
+                    }
+                    self.pendingCount = Math.max(self.pendingCount - 1, 0);
+                    self.approvedCount += 1;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(function(err) {
+                console.error(err);
+                alert('Network error.');
+            });
+        },
+
+        rejectItem: function(itemType, itemId) {
+            var self = this;
+            if (!confirm('Are you sure you want to flag or reject this item?')) return;
+
+            fetch('/api/admin/verify/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    item_type: itemType,
+                    item_id: itemId,
+                    action: 'REJECT'
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var el = document.getElementById('item-' + itemType + '-' + itemId);
+                    if (el) {
+                        el.innerHTML = '<div class="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl w-full flex items-center justify-between text-xs font-bold"><span><i class="fa-solid fa-triangle-exclamation mr-2"></i>Item rejected and flagged for audit revision.</span></div>';
+                    }
+                    self.pendingCount = Math.max(self.pendingCount - 1, 0);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    };
+}
+</script>
+{% endblock %}

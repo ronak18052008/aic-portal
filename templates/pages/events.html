@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Events, Workshops &amp; Seminars | AIC Portal{% endblock %}
+
+{% block extra_head %}
+<style>
+body { font-size: 17.5px; }
+.badge-conference  { background:#dbeafe; color:#1d4ed8; }
+.badge-workshop    { background:#dcfce7; color:#15803d; }
+.badge-seminar     { background:#fef9c3; color:#854d0e; }
+.badge-hackathon   { background:#ede9fe; color:#6d28d9; }
+.badge-webinar     { background:#e0f2fe; color:#0369a1; }
+.badge-fdp         { background:#fce7f3; color:#9d174d; }
+.badge-symposium   { background:#fff7ed; color:#c2410c; }
+.badge-bootcamp    { background:#f0fdf4; color:#166534; }
+.badge-panel       { background:#f5f3ff; color:#5b21b6; }
+.badge-expo        { background:#fef3c7; color:#92400e; }
+.badge-online      { background:#ecfdf5; color:#065f46; }
+.badge-offline     { background:#eff6ff; color:#1e40af; }
+.badge-hybrid      { background:#fdf4ff; color:#7e22ce; }
+.badge-free        { background:#dcfce7; color:#166534; }
+.badge-paid        { background:#fef2f2; color:#991b1b; }
+.event-card        { transition: box-shadow .18s, transform .18s; }
+.event-card:hover  { box-shadow: 0 10px 40px rgba(99,102,241,.13); transform: translateY(-2px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="eventsApp()" class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-calendar-days text-brand-600"></i>
+        Events, Workshops &amp; Seminars
+      </h1>
+      <p class="text-sm text-slate-500 mt-1">
+        {{ total_events }} upcoming programmes across India&rsquo;s top institutions and organisations.
+        {% if is_student %}<span class="text-brand-600 font-semibold">Register directly from this page.</span>{% endif %}
+      </p>
+    </div>
+    {% if not is_student %}
+    <div class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+      <i class="fa-solid fa-eye"></i> View-only &mdash; only students can register
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Featured Events -->
+  {% if featured_events %}
+  <section class="space-y-3">
+    <h2 class="text-base font-bold text-slate-700 flex items-center gap-2">
+      <i class="fa-solid fa-star text-amber-500"></i> Featured &amp; Highlighted
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for ev in featured_events %}
+      <a href="#event-{{ ev.id }}" class="block rounded-2xl overflow-hidden border-2 border-brand-200 bg-gradient-to-br from-brand-50 to-white shadow hover:shadow-lg transition-shadow">
+        <div class="px-5 py-4 space-y-1.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded badge-{{ ev.event_type|lower }}">{{ ev.get_event_type_display }}</span>
+            {% if ev.is_free %}<span class="text-[10px] font-bold px-2 py-0.5 rounded badge-free">Free</span>{% else %}<span class="text-[10px] font-bold px-2 py-0.5 rounded badge-paid">&#8377;{{ ev.registration_fee|floatformat:0 }}</span>{% endif %}
+            {% if ev.provides_certificate %}<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800"><i class="fa-solid fa-certificate mr-0.5"></i>Cert</span>{% endif %}
+          </div>
+          <h3 class="font-bold text-sm text-slate-900 leading-tight">{{ ev.title }}</h3>
+          <p class="text-xs text-slate-500 font-semibold">{{ ev.organizer_name }}</p>
+          <p class="text-xs text-brand-600 font-bold">
+            <i class="fa-regular fa-calendar mr-1"></i>{{ ev.start_date|date:"d M Y" }}
+            {% if ev.end_date %}&ndash;{{ ev.end_date|date:"d M Y" }}{% endif %}
+          </p>
+          <p class="text-[11px] text-slate-400">
+            {% if ev.mode == "ONLINE" %}<i class="fa-solid fa-wifi mr-1"></i>{{ ev.online_platform|default:"Online" }}
+            {% else %}<i class="fa-solid fa-location-dot mr-1"></i>{{ ev.city }}, {{ ev.state }}{% endif %}
+          </p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Filters -->
+  <section class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4">
+    <form method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 flex-wrap">
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs font-bold text-slate-500 mb-1">Search</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Event name, organiser, speaker..."
+               class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400">
+      </div>
+      <div class="min-w-[160px]">
+        <label class="block text-xs font-bold text-slate-500 mb-1">Type</label>
+        <select name="type" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">All Types</option>
+          {% for val, label in event_types %}
+          <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="min-w-[130px]">
+        <label class="block text-xs font-bold text-slate-500 mb-1">Mode</label>
+        <select name="mode" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">All Modes</option>
+          {% for val, label in event_modes %}
+          <option value="{{ val }}" {% if mode_filter == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="min-w-[120px]">
+        <label class="block text-xs font-bold text-slate-500 mb-1">Fee</label>
+        <select name="free" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">All</option>
+          <option value="free" {% if free_filter == "free" %}selected{% endif %}>Free Only</option>
+          <option value="paid" {% if free_filter == "paid" %}selected{% endif %}>Paid Only</option>
+        </select>
+      </div>
+      <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 shrink-0">
+        <i class="fa-solid fa-magnifying-glass"></i> Filter
+      </button>
+      {% if q or type_filter or mode_filter or free_filter %}
+      <a href="/events/" class="px-4 py-2 bg-slate-100 text-slate-700 font-semibold text-sm rounded-xl shrink-0 flex items-center">Clear</a>
+      {% endif %}
+    </form>
+  </section>
+
+  <!-- Registration Toast -->
+  <div x-show="toast.show" x-transition.opacity
+       :class="toast.success ? 'bg-emerald-600' : 'bg-rose-600'"
+       class="fixed bottom-6 right-6 z-50 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold max-w-sm"
+       style="display:none;">
+    <i :class="toast.success ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'"></i>
+    <span x-text="toast.message"></span>
+    <button @click="toast.show=false" class="ml-auto opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <!-- Event Listing -->
+  <section class="space-y-5">
+    {% if not events %}
+    <div class="text-center py-16 text-slate-400">
+      <i class="fa-regular fa-calendar-xmark text-5xl mb-4 block"></i>
+      <p class="text-base font-semibold">No events match your filters.</p>
+      <a href="/events/" class="text-brand-600 font-bold text-sm mt-2 inline-block hover:underline">Clear all filters</a>
+    </div>
+    {% endif %}
+
+    {% for ev in events %}
+    <div id="event-{{ ev.id }}" class="event-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto]">
+
+        <!-- Body -->
+        <div class="p-5 space-y-3">
+          <!-- Badges + Title -->
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap gap-1.5 items-center">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded badge-{{ ev.event_type|lower }}">{{ ev.get_event_type_display }}</span>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded badge-{{ ev.mode|lower }}">{{ ev.get_mode_display }}</span>
+              {% if ev.is_free %}
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded badge-free">Free</span>
+              {% else %}
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded badge-paid">&#8377;{{ ev.registration_fee|floatformat:0 }}</span>
+              {% endif %}
+              {% if ev.provides_certificate %}
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800"><i class="fa-solid fa-certificate mr-0.5"></i>Certificate</span>
+              {% endif %}
+              {% if ev.field %}
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">{{ ev.field.name }}</span>
+              {% endif %}
+            </div>
+            <h3 class="font-extrabold text-base text-slate-900 leading-snug">{{ ev.title }}</h3>
+            <p class="text-sm text-brand-700 font-semibold">
+              <i class="fa-solid fa-building mr-1 opacity-70"></i>{{ ev.organizer_name }}
+            </p>
+          </div>
+
+          <!-- Key Meta Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="space-y-0.5">
+              <div class="text-slate-400 font-bold uppercase text-[10px]"><i class="fa-regular fa-calendar mr-1"></i>Date</div>
+              <div class="text-slate-800 font-semibold">
+                {{ ev.start_date|date:"d M Y" }}{% if ev.end_date %} &ndash; {{ ev.end_date|date:"d M Y" }}{% endif %}
+              </div>
+              {% if ev.start_time %}<div class="text-slate-500">{{ ev.start_time|date:"g:i A" }} IST</div>{% endif %}
+            </div>
+            <div class="space-y-0.5">
+              <div class="text-slate-400 font-bold uppercase text-[10px]">
+                {% if ev.mode == "ONLINE" %}Platform{% else %}Venue{% endif %}
+              </div>
+              {% if ev.mode == "ONLINE" %}
+                <div class="text-slate-800 font-semibold">{{ ev.online_platform|default:"Virtual" }}</div>
+                <div class="text-slate-500">Online / National</div>
+              {% else %}
+                <div class="text-slate-800 font-semibold">{{ ev.city }}, {{ ev.state }}</div>
+                {% if ev.venue %}<div class="text-slate-500 truncate">{{ ev.venue }}</div>{% endif %}
+              {% endif %}
+            </div>
+            <div class="space-y-0.5">
+              <div class="text-slate-400 font-bold uppercase text-[10px]"><i class="fa-solid fa-users mr-1"></i>Capacity</div>
+              <div class="text-slate-800 font-semibold">{{ ev.max_registrations }} seats</div>
+              {% if ev.registration_deadline %}
+              <div class="text-rose-600 font-bold">Register by {{ ev.registration_deadline|date:"d M Y" }}</div>
+              {% endif %}
+            </div>
+            <div class="space-y-0.5">
+              <div class="text-slate-400 font-bold uppercase text-[10px]">Audience</div>
+              <div class="text-slate-700">{{ ev.target_audience|truncatechars:60 }}</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <p class="text-sm text-slate-600 leading-relaxed">{{ ev.description }}</p>
+
+          <!-- Expandable Details -->
+          <div x-data="{expanded: false}" class="space-y-2">
+            <button @click="expanded = !expanded"
+                    class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 transition-colors">
+              <i :class="expanded ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-[10px]"></i>
+              <span x-text="expanded ? 'Hide Details' : 'Show Full Details'">Show Full Details</span>
+            </button>
+            <div x-show="expanded" class="space-y-3 border-t border-slate-100 pt-3">
+              {% if ev.speakers %}
+              <div>
+                <div class="text-xs font-bold text-slate-500 mb-1.5"><i class="fa-solid fa-microphone-lines mr-1"></i>Speakers / Panelists</div>
+                <p class="text-sm text-slate-700">{{ ev.speakers }}</p>
+              </div>
+              {% endif %}
+              {% if ev.topics_covered %}
+              <div>
+                <div class="text-xs font-bold text-slate-500 mb-1.5"><i class="fa-solid fa-list-check mr-1"></i>Key Topics</div>
+                <p class="text-sm text-slate-700">{{ ev.topics_covered }}</p>
+              </div>
+              {% endif %}
+              {% if ev.prerequisites %}
+              <div class="flex gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                <span><b>Prerequisites:</b> {{ ev.prerequisites }}</span>
+              </div>
+              {% endif %}
+              {% if ev.outcome %}
+              <div class="flex gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                <i class="fa-solid fa-trophy mt-0.5 shrink-0"></i>
+                <span><b>What you gain:</b> {{ ev.outcome }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div class="lg:w-52 xl:w-60 border-t lg:border-t-0 lg:border-l border-slate-100 p-5 flex flex-col justify-between gap-5 bg-slate-50/50">
+          <div class="space-y-2.5 text-xs">
+            <div class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wide">Quick Info</div>
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-certificate text-amber-500 mt-0.5 w-4 shrink-0"></i>
+              <span class="text-slate-700">{% if ev.provides_certificate %}Certificate Provided{% else %}No Certificate{% endif %}</span>
+            </div>
+            {% if ev.mode != "OFFLINE" and ev.meeting_link %}
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-link text-brand-500 mt-0.5 w-4 shrink-0"></i>
+              <a href="{{ ev.meeting_link }}" target="_blank" class="text-brand-600 hover:underline break-all">Join Online</a>
+            </div>
+            {% endif %}
+            {% if ev.official_url %}
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-globe text-slate-400 mt-0.5 w-4 shrink-0"></i>
+              <a href="{{ ev.official_url }}" target="_blank" class="text-brand-600 hover:underline break-all">Official Website</a>
+            </div>
+            {% endif %}
+            <div class="flex items-start gap-2">
+              <i class="fa-solid fa-money-bill-wave text-emerald-500 mt-0.5 w-4 shrink-0"></i>
+              <span class="text-slate-700">{% if ev.is_free %}Free Admission{% else %}&#8377;{{ ev.registration_fee|floatformat:0 }} Fee{% endif %}</span>
+            </div>
+          </div>
+
+          <div>
+            {% if is_student %}
+              {% if ev.id|stringformat:"s" in registered_event_ids|join:"," %}
+              <div class="w-full py-2.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl text-center flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> Registered
+              </div>
+              {% else %}
+              <button data-event-id="{{ ev.id }}"
+                      @click="register('{{ ev.id }}')"
+                      :disabled="loading === '{{ ev.id }}'"
+                      class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2">
+                <i :class="loading === '{{ ev.id }}' ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-paper-plane'"></i>
+                <span x-text="loading === '{{ ev.id }}' ? 'Registering...' : 'Register Now'">Register Now</span>
+              </button>
+              {% endif %}
+            {% else %}
+              {% if ev.official_url %}
+              <a href="{{ ev.official_url }}" target="_blank"
+                 class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Official Page
+              </a>
+              {% else %}
+              <div class="w-full py-2.5 bg-slate-100 text-slate-500 font-bold text-xs rounded-xl text-center">
+                View Only
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+</div>
+
+<script>
+function eventsApp() {
+  return {
+    loading: null,
+    toast: { show: false, success: false, message: '' },
+    register(eventId) {
+      this.loading = eventId;
+      const csrfCookie = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+      fetch('/api/events/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfCookie },
+        body: JSON.stringify({ event_id: eventId })
+      })
+      .then(r => r.json())
+      .then(data => {
+        this.loading = null;
+        if (data.success) {
+          this.toast = {
+            show: true, success: true,
+            message: 'Registered for ' + data.event_title + '!' + (data.provides_certificate ? ' A certificate will be provided.' : '')
+          };
+          const btn = document.querySelector('[data-event-id="' + eventId + '"]');
+          if (btn) {
+            btn.outerHTML = '<div class="w-full py-2.5 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl text-center flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i> Registered</div>';
+          }
+        } else {
+          this.toast = { show: true, success: false, message: data.error || 'Registration failed.' };
+        }
+        setTimeout(() => { this.toast.show = false; }, 6000);
+      })
+      .catch(() => {
+        this.loading = null;
+        this.toast = { show: true, success: false, message: 'Network error. Please try again.' };
+        setTimeout(() => { this.toast.show = false; }, 5000);
+      });
+    }
+  };
+}
+</script>
+{% endblock %}

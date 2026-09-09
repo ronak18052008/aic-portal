@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}My Applications Lifecycle | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1">
+                <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-200">APPLICATION TRACKING</span>
+                <h2 class="text-2xl font-black text-slate-900 mt-1">Application Lifecycle Manager</h2>
+                <p class="text-xs text-slate-500">Track status progression across internal applications and official external submissions.</p>
+            </div>
+            
+            <form action="/applications/" method="GET" class="flex items-center gap-2">
+                <label class="text-xs font-extrabold uppercase text-slate-600 shrink-0">Filter Status:</label>
+                <select name="status" onchange="this.form.submit()" class="px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500">
+                    <option value="">All Statuses ({{ total_count }})</option>
+                    {% for val, lbl in status_choices %}
+                    <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ lbl }}</option>
+                    {% endfor %}
+                </select>
+                {% if status_filter %}
+                <a href="/applications/" class="text-xs font-bold text-red-500 hover:text-red-700 ml-1">&times; Clear</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        {% for app in applications %}
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                    <span class="px-2.5 py-1 bg-brand-100 text-brand-800 text-[10px] font-extrabold rounded-full uppercase">{{ app.opportunity.get_opportunity_type_display }}</span>
+                    <h3 class="text-base font-bold text-slate-900 mt-1">{{ app.opportunity.title }}</h3>
+                    <p class="text-xs text-slate-500 font-semibold">{{ app.opportunity.organization_name }} • Applied on {{ app.applied_at|date:"M d, Y" }}</p>
+                </div>
+                <span class="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full self-start sm:self-center">
+                    {{ app.get_status_display }}
+                </span>
+            </div>
+
+            <!-- Application Lifecycle Progress Bar -->
+            <div class="space-y-2">
+                <span class="text-[11px] font-bold text-slate-500 uppercase">Recruitment Lifecycle Progress</span>
+                <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-bold text-slate-600">
+                    <div class="p-2 bg-emerald-100 text-emerald-800 rounded-lg">1. Applied</div>
+                    <div class="p-2 bg-slate-100 rounded-lg">2. Screening</div>
+                    <div class="p-2 bg-slate-100 rounded-lg">3. Assessment</div>
+                    <div class="p-2 bg-slate-100 rounded-lg">4. Offer</div>
+                </div>
+            </div>
+
+            {% if app.is_external_redirect %}
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-500"><i class="fa-solid fa-link text-brand-600 mr-1"></i>Verified External Portal Link</span>
+                <a href="{{ app.official_redirect_url }}" target="_blank" class="font-bold text-brand-600 hover:underline">
+                    View Official Portal <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center text-slate-500 text-xs">
+            No active applications found. Browse <a href="/search/?type=jobs" class="text-brand-600 font-bold">Jobs & Internships</a> to apply.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

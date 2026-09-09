@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Industry Challenges | AIC Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-black text-slate-900 flex items-center gap-3">
+        <span class="text-2xl">🏆</span> Industry Challenges
+      </h1>
+      <p class="text-slate-500 text-sm mt-1">Solve real-world problems and unlock career opportunities</p>
+    </div>
+    {% if role == 'INDUSTRY' %}
+    <a href="/challenges/create/" class="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-bold shadow">
+      <i class="fa-solid fa-plus mr-2"></i>Post a Challenge
+    </a>
+    {% elif role in 'SYSTEM_ADMIN INSTITUTION ACADEMICIAN' %}
+    <a href="/challenges/admin/" class="px-5 py-2.5 bg-slate-700 text-white rounded-xl text-sm font-bold shadow">
+      <i class="fa-solid fa-chart-pie mr-2"></i>Admin Overview
+    </a>
+    {% elif role == 'STUDENT' %}
+    <a href="/challenges/my/" class="px-5 py-2.5 bg-white border border-brand-200 text-brand-700 rounded-xl text-sm font-bold">
+      <i class="fa-solid fa-list-check mr-2"></i>My Challenges
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap gap-3 items-end">
+    <div class="flex-1 min-w-48">
+      <label class="text-xs font-bold text-slate-500 mb-1 block">Search</label>
+      <input name="q" value="{{ q }}" placeholder="Challenge name, company, skill..."
+             class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-300 focus:outline-none">
+    </div>
+    <div>
+      <label class="text-xs font-bold text-slate-500 mb-1 block">Difficulty</label>
+      <select name="difficulty" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-300 focus:outline-none">
+        <option value="">All Levels</option>
+        {% for k,v in difficulties %}<option value="{{ k }}" {% if difficulty == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-bold">
+      <i class="fa-solid fa-magnifying-glass mr-1"></i>Filter
+    </button>
+    {% if q or difficulty %}<a href="/challenges/" class="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold">Clear</a>{% endif %}
+  </form>
+
+  <p class="text-sm text-slate-500 font-semibold">{{ total }} challenges found</p>
+
+  <!-- Challenge Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for cd in challenges_data %}
+    {% with ch=cd.challenge %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+      <!-- Company banner -->
+      <div class="px-5 pt-5 pb-4 border-b border-slate-100">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full border
+                {% if ch.difficulty == 'BEGINNER' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                {% elif ch.difficulty == 'INTERMEDIATE' %}bg-amber-50 text-amber-700 border-amber-200
+                {% elif ch.difficulty == 'ADVANCED' %}bg-orange-50 text-orange-700 border-orange-200
+                {% else %}bg-red-50 text-red-700 border-red-200{% endif %}">
+                {{ ch.get_difficulty_display|truncatechars:14 }}
+              </span>
+              {% if ch.is_team_challenge %}<span class="px-2 py-0.5 text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100 rounded-full">Team {{ ch.team_min }}–{{ ch.team_max }}</span>{% endif %}
+            </div>
+            <h3 class="font-black text-slate-900 text-base leading-tight">{{ ch.title }}</h3>
+            <p class="text-xs text-slate-500 mt-1 font-semibold">
+              <i class="fa-solid fa-building mr-1 text-brand-400"></i>{{ ch.organization_name }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-5 py-4 flex-1 space-y-3">
+        <p class="text-xs text-slate-600 line-clamp-2">{{ ch.problem_statement|truncatechars:120 }}</p>
+
+        <!-- Required skills -->
+        <div class="flex flex-wrap gap-1">
+          {% for node in ch.required_skills.all|slice:":4" %}
+          <span class="px-2 py-0.5 bg-brand-50 text-brand-700 text-[10px] font-bold rounded-full border border-brand-100">{{ node.name }}</span>
+          {% endfor %}
+        </div>
+
+        <!-- Skill match for student -->
+        {% if cd.match_pct is not None %}
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs text-slate-500 font-semibold">Your Skill Match</span>
+            <span class="text-xs font-black {% if cd.match_pct >= 70 %}text-emerald-600{% elif cd.match_pct >= 40 %}text-amber-600{% else %}text-red-500{% endif %}">
+              {{ cd.match_pct }}%
+            </span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2">
+            <div class="h-2 rounded-full {% if cd.match_pct >= 70 %}bg-emerald-500{% elif cd.match_pct >= 40 %}bg-amber-400{% else %}bg-red-400{% endif %}"
+                 style="width: {{ cd.match_pct }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+          <span><i class="fa-solid fa-users mr-1"></i>{{ cd.participant_count }} joined</span>
+          <span><i class="fa-solid fa-clock mr-1"></i>{{ ch.duration_weeks }}w duration</span>
+          <span><i class="fa-solid fa-calendar mr-1"></i>{{ ch.deadline|date:"d M Y" }}</span>
+        </div>
+      </div>
+
+      <div class="px-5 pb-5 flex gap-2">
+        <a href="/challenges/{{ ch.slug }}/"
+           class="flex-1 text-center py-2.5 border border-slate-200 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition">
+          View Details
+        </a>
+        {% if role == 'STUDENT' %}
+        {% if cd.registered %}
+        <a href="/challenges/{{ ch.slug }}/workspace/" class="flex-1 text-center py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition">
+          Open Workspace
+        </a>
+        {% else %}
+        <button onclick="registerChallenge('{{ ch.id }}', '{{ ch.title }}')"
+                class="flex-1 py-2.5 bg-brand-600 text-white rounded-xl text-sm font-bold hover:bg-brand-700 transition">
+          Participate
+        </button>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+    {% empty %}
+    <div class="col-span-3 text-center py-16">
+      <span class="text-6xl block mb-4">🏆</span>
+      <h3 class="text-xl font-bold text-slate-700">No challenges found</h3>
+      <p class="text-slate-500 text-sm mt-2">Try different filters or check back soon.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+function registerChallenge(challengeId, title) {
+  if (!confirm(`Register for "${title}"?`)) return;
+  fetch('/api/challenges/participate/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ challenge_id: challengeId })
+  }).then(r => r.json()).then(data => {
+    if (data.success) {
+      alert('Registered successfully! Check "My Challenges" to get started.');
+      location.reload();
+    } else {
+      alert(data.error || 'Registration failed.');
+    }
+  });
+}
+</script>
+{% endblock %}

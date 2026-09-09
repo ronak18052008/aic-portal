@@ -1,0 +1,475 @@
+{% extends 'base.html' %}
+
+{% block title %}Adaptive Skill Assessment Center | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8" x-data="skillAssessmentHub()">
+
+    <!-- Top Banner -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-2">
+            <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-black rounded-full border border-brand-200 uppercase tracking-wide">
+                <i class="fa-solid fa-graduation-cap mr-1.5"></i>ADAPTIVE ASSESSMENT ENGINE
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Technical & Employability Skill Tests</h2>
+            <p class="text-sm text-slate-600 leading-relaxed max-w-2xl">
+                Take verified adaptive examinations across foundational, domain, and advanced systems. Scores automatically verify your competency on your <strong>AIC Passport</strong>, <strong>AI Resume</strong>, and <strong>Recruiter Discovery Index</strong>.
+            </p>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl shrink-0 self-start md:w-52 text-center">
+            <span class="text-[11px] font-extrabold text-emerald-800 uppercase block">Verified Tests Passed</span>
+            <span class="text-3xl font-black text-emerald-700">{{ completed_count }}</span>
+            <span class="text-xs font-semibold text-emerald-800 block mt-0.5">Credential Badges Active</span>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 1. CASCADING SELECTOR & ASSESSMENT START CARD (When test not running)    -->
+    <!-- ========================================================================= -->
+    <div x-show="!testActive && !testCompleted" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-black text-slate-900 text-lg">Select Skill Assessment</h3>
+            <p class="text-xs text-slate-500 mt-1">Choose the primary academic field first, then pick the technical skill test to start.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Step 1: Select Main Field -->
+            <div>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-2">1. Select Main Academic Field / Discipline</label>
+                <select x-model="selectedFieldId" @change="onFieldChange()" class="w-full px-4 py-3 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-800">
+                    <template x-for="f in fieldsData" :key="f.id">
+                        <option :value="f.id" x-text="f.name"></option>
+                    </template>
+                </select>
+            </div>
+
+            <!-- Step 2: Select Skill Assessment Sub-Category -->
+            <div>
+                <label class="block text-xs font-extrabold uppercase text-slate-700 mb-2">2. Select Skill Test / Sub-Category</label>
+                <select x-model="selectedAssessmentId" @change="onAssessmentSelect()" class="w-full px-4 py-3 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 text-slate-800">
+                    <template x-for="a in availableAssessments" :key="a.id">
+                        <option :value="a.id" x-text="a.title + ' (' + a.skill_name + ')'"></option>
+                    </template>
+                </select>
+            </div>
+        </div>
+
+        <!-- Selected Assessment Details Preview Card -->
+        <template x-if="currentAssessment">
+            <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-800 text-[10px] font-extrabold uppercase" x-text="currentAssessment.category"></span>
+                            <span class="text-xs font-bold text-slate-500" x-text="'Target Skill: ' + currentAssessment.skill_name"></span>
+                        </div>
+                        <h4 class="text-xl font-black text-slate-900" x-text="currentAssessment.title"></h4>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-xs font-bold text-slate-700 shrink-0">
+                        <div class="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-center">
+                            <span class="text-[10px] text-slate-400 block uppercase">Duration</span>
+                            <span class="font-black text-slate-800" x-text="currentAssessment.duration_minutes + ' Mins'"></span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-center">
+                            <span class="text-[10px] text-slate-400 block uppercase">Questions</span>
+                            <span class="font-black text-slate-800" x-text="currentAssessment.total_questions + ' MCQs'"></span>
+                        </div>
+                        <div class="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-center">
+                            <span class="text-[10px] text-slate-400 block uppercase">Passing Mark</span>
+                            <span class="font-black text-emerald-600" x-text="currentAssessment.pass_mark + '%'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p class="text-xs text-slate-500">
+                        <i class="fa-solid fa-circle-info text-brand-600 mr-1.5"></i>
+                        Adaptive difficulty adjusts based on answer precision. Verifies immediately on AIC Passport.
+                    </p>
+                    <button type="button" @click="startAssessment()" class="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play text-xs"></i>
+                        <span>Start Assessment Now →</span>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 2. LIVE INTERACTIVE ASSESSMENT RUNNER (When testActive == true)           -->
+    <!-- ========================================================================= -->
+    <div x-show="testActive" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6" style="display: none;">
+        <template x-if="currentAssessment && currentAssessment.questions.length > 0">
+            <div class="space-y-6">
+                <!-- Test Header: Title, Progress, and Countdown Timer -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase animate-pulse">Live Test</span>
+                            <span class="text-xs font-bold text-slate-500" x-text="currentAssessment.skill_name"></span>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900 mt-1" x-text="currentAssessment.title"></h3>
+                    </div>
+
+                    <div class="flex items-center gap-3 self-end sm:self-center">
+                        <div class="px-4 py-2 bg-slate-900 text-amber-400 font-mono font-black text-sm rounded-xl flex items-center gap-2 shadow">
+                            <i class="fa-regular fa-clock"></i>
+                            <span x-text="formatTimer()"></span>
+                        </div>
+                        <span class="text-xs font-bold text-slate-500" x-text="'Question ' + (currentQuestionIndex + 1) + ' of ' + currentAssessment.questions.length"></span>
+                    </div>
+                </div>
+
+                <!-- Question Progress Bar -->
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="bg-brand-600 h-2 rounded-full transition-all duration-300"
+                         :style="'width: ' + (((currentQuestionIndex + 1) / currentAssessment.questions.length) * 100) + '%;'"></div>
+                </div>
+
+                <!-- Current Question Card -->
+                <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-5">
+                    <div class="flex items-start gap-3">
+                        <span class="px-3 py-1 bg-brand-600 text-white font-black text-xs rounded-lg shrink-0" x-text="'Q' + (currentQuestionIndex + 1)"></span>
+                        <h4 class="text-sm font-bold text-slate-900 leading-relaxed" x-text="currentAssessment.questions[currentQuestionIndex].question_text"></h4>
+                    </div>
+
+                    <!-- MCQ Options A, B, C, D -->
+                    <div class="grid grid-cols-1 gap-2.5 pt-2">
+                        <!-- Option A -->
+                        <button type="button" @click="selectOption('A')"
+                                :class="selectedOption === 'A' ? 'border-brand-600 bg-brand-50 text-brand-950 font-bold ring-2 ring-brand-500' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'"
+                                class="p-4 text-left text-xs rounded-xl border transition-all flex items-center gap-3">
+                            <span :class="selectedOption === 'A' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'" class="w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0">A</span>
+                            <span x-text="currentAssessment.questions[currentQuestionIndex].option_a"></span>
+                        </button>
+
+                        <!-- Option B -->
+                        <button type="button" @click="selectOption('B')"
+                                :class="selectedOption === 'B' ? 'border-brand-600 bg-brand-50 text-brand-950 font-bold ring-2 ring-brand-500' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'"
+                                class="p-4 text-left text-xs rounded-xl border transition-all flex items-center gap-3">
+                            <span :class="selectedOption === 'B' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'" class="w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0">B</span>
+                            <span x-text="currentAssessment.questions[currentQuestionIndex].option_b"></span>
+                        </button>
+
+                        <!-- Option C -->
+                        <button type="button" @click="selectOption('C')"
+                                :class="selectedOption === 'C' ? 'border-brand-600 bg-brand-50 text-brand-950 font-bold ring-2 ring-brand-500' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'"
+                                class="p-4 text-left text-xs rounded-xl border transition-all flex items-center gap-3">
+                            <span :class="selectedOption === 'C' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'" class="w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0">C</span>
+                            <span x-text="currentAssessment.questions[currentQuestionIndex].option_c"></span>
+                        </button>
+
+                        <!-- Option D -->
+                        <button type="button" @click="selectOption('D')"
+                                :class="selectedOption === 'D' ? 'border-brand-600 bg-brand-50 text-brand-950 font-bold ring-2 ring-brand-500' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'"
+                                class="p-4 text-left text-xs rounded-xl border transition-all flex items-center gap-3">
+                            <span :class="selectedOption === 'D' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600'" class="w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center shrink-0">D</span>
+                            <span x-text="currentAssessment.questions[currentQuestionIndex].option_d"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation & Action Buttons -->
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" @click="prevQuestion()" :disabled="currentQuestionIndex === 0"
+                            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                        ← Previous
+                    </button>
+
+                    <div class="flex gap-2">
+                        <template x-if="currentQuestionIndex < currentAssessment.questions.length - 1">
+                            <button type="button" @click="nextQuestion()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                                Next Question →
+                            </button>
+                        </template>
+
+                        <template x-if="currentQuestionIndex === currentAssessment.questions.length - 1">
+                            <button type="button" @click="submitTest()" :disabled="isSubmitting"
+                                    class="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-check"></i>
+                                <span x-text="isSubmitting ? 'Grading Answers...' : 'Finish & Submit Assessment'"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 3. SCORE REPORT & CREDENTIAL PROPAGATION (When testCompleted == true)     -->
+    <!-- ========================================================================= -->
+    <template x-if="testCompleted && resultData">
+        <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+            
+            <!-- Result Banner -->
+            <div class="p-6 rounded-3xl border text-center space-y-4"
+                 :class="resultData.passed ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-amber-50 border-amber-200 text-amber-950'">
+                
+                <div class="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl shadow-inner"
+                     :class="resultData.passed ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'">
+                    <i :class="resultData.passed ? 'fa-solid fa-trophy' : 'fa-solid fa-triangle-exclamation'"></i>
+                </div>
+
+                <div class="space-y-1">
+                    <h3 class="text-2xl font-black" x-text="resultData.passed ? 'Assessment Passed with Honors!' : 'Assessment Completed — Keep Practicing'"></h3>
+                    <p class="text-xs font-semibold" x-text="'Tested Competency: ' + resultData.skill_name + ' • ' + resultData.assessment_title"></p>
+                </div>
+
+                <!-- Score Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto pt-2">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Your Score</span>
+                        <span class="text-2xl font-black text-brand-700" x-text="resultData.score_percentage + '%'"></span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Correct Answers</span>
+                        <span class="text-2xl font-black text-slate-800" x-text="resultData.correct_count + '/' + resultData.total_questions"></span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Pass Threshold</span>
+                        <span class="text-2xl font-black text-slate-600" x-text="resultData.pass_mark + '%'"></span>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Proficiency</span>
+                        <span class="text-sm font-black text-emerald-600 uppercase mt-1 block" x-text="resultData.proficiency_awarded"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automatic Credential Propagation Cards -->
+            <div class="space-y-3">
+                <h4 class="font-extrabold text-xs uppercase text-slate-700 tracking-wider">
+                    <i class="fa-solid fa-arrows-spin text-brand-600 mr-1.5"></i>
+                    Credentials Automatically Propagated Across Platform
+                </h4>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                        <div class="flex items-center gap-2 text-emerald-600 text-xs font-bold">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>AIC Passport</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Badge added with <strong x-text="resultData.score_percentage + '%'"></strong> verified score and QR token.</p>
+                        <a href="/passport/" class="inline-block text-[11px] font-bold text-brand-600 hover:underline pt-1">View Passport →</a>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                        <div class="flex items-center gap-2 text-emerald-600 text-xs font-bold">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>AI Resume Builder</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Auto-synced under Technical Skills with official AIC verification link.</p>
+                        <a href="/resume/builder/" class="inline-block text-[11px] font-bold text-brand-600 hover:underline pt-1">Open Resume Studio →</a>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+                        <div class="flex items-center gap-2 text-emerald-600 text-xs font-bold">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>In-App Notifications</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Verification certificate issued and logged to your activity ledger.</p>
+                        <a href="/notifications/" class="inline-block text-[11px] font-bold text-brand-600 hover:underline pt-1">View Notifications →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Question Review & Explanations -->
+            <div class="space-y-3 pt-4 border-t border-slate-100">
+                <h4 class="font-extrabold text-xs uppercase text-slate-700 tracking-wider">
+                    <i class="fa-solid fa-book-open text-brand-600 mr-1.5"></i>
+                    Question Answers & Detailed Explanations
+                </h4>
+
+                <div class="space-y-3">
+                    <template x-for="(rev, idx) in resultData.review_details" :key="idx">
+                        <div class="p-4 rounded-2xl border text-xs space-y-2"
+                             :class="rev.is_correct ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200'">
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="font-bold text-slate-900" x-text="'Q' + (idx + 1) + ': ' + rev.question_text"></span>
+                                <span class="px-2 py-0.5 rounded-full font-black text-[10px] uppercase shrink-0"
+                                      :class="rev.is_correct ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'"
+                                      x-text="rev.is_correct ? 'Correct' : 'Incorrect'"></span>
+                            </div>
+                            <div class="flex gap-4 text-[11px] font-bold">
+                                <span class="text-slate-600" x-text="'Your Answer: Option ' + (rev.user_option || 'None')"></span>
+                                <span class="text-emerald-700" x-text="'Correct Answer: Option ' + rev.correct_option"></span>
+                            </div>
+                            <p class="text-slate-600 italic pt-1 border-t border-slate-200/50" x-text="'Explanation: ' + rev.explanation"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Retake or Choose Another Test Button -->
+            <div class="pt-4 border-t border-slate-100 flex justify-between items-center">
+                <a href="/dashboard/" class="text-xs font-bold text-slate-500 hover:underline">← Back to Dashboard</a>
+                <button type="button" @click="resetToSelector()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                    Take Another Assessment →
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Past Completed Assessments Table -->
+    {% if completed_skills %}
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-black text-slate-900 text-base">Your Verified Assessment Record</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {% for cs in completed_skills %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center text-xs">
+                <div>
+                    <h5 class="font-bold text-slate-900 text-sm">{{ cs.skill.name }}</h5>
+                    <span class="text-[11px] text-slate-500">{{ cs.verified_by|default:"AIC Adaptive Engine" }}</span>
+                </div>
+                <div class="text-right">
+                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] uppercase block">
+                        {{ cs.score_percentage }}% Verified
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-bold mt-0.5 block">{{ cs.proficiency }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function skillAssessmentHub() {
+    return {
+        fieldsData: {{ fields_with_assessments_json|safe }},
+        selectedFieldId: '',
+        availableAssessments: [],
+        selectedAssessmentId: '',
+        currentAssessment: null,
+        
+        // Test Running State
+        testActive: false,
+        testCompleted: false,
+        currentQuestionIndex: 0,
+        userAnswers: {},
+        selectedOption: '',
+        timerSeconds: 0,
+        timerInterval: null,
+        isSubmitting: false,
+        resultData: null,
+
+        onFieldChange() {
+            var self = this;
+            var match = this.fieldsData.find(function(f) {
+                return f.id === self.selectedFieldId;
+            });
+            this.availableAssessments = match ? match.assessments : [];
+            this.selectedAssessmentId = this.availableAssessments.length > 0 ? this.availableAssessments[0].id : '';
+            this.onAssessmentSelect();
+        },
+
+        onAssessmentSelect() {
+            var self = this;
+            this.currentAssessment = this.availableAssessments.find(function(a) {
+                return a.id === self.selectedAssessmentId;
+            }) || null;
+        },
+
+        startAssessment() {
+            if (!this.currentAssessment || !this.currentAssessment.questions || this.currentAssessment.questions.length === 0) return;
+            this.testActive = true;
+            this.testCompleted = false;
+            this.currentQuestionIndex = 0;
+            this.userAnswers = {};
+            this.selectedOption = '';
+            this.timerSeconds = this.currentAssessment.duration_minutes * 60;
+            
+            var self = this;
+            clearInterval(this.timerInterval);
+            this.timerInterval = setInterval(function() {
+                if (self.timerSeconds > 0) {
+                    self.timerSeconds--;
+                } else {
+                    clearInterval(self.timerInterval);
+                    self.submitTest();
+                }
+            }, 1000);
+        },
+
+        selectOption(opt) {
+            this.selectedOption = opt;
+            var q = this.currentAssessment.questions[this.currentQuestionIndex];
+            this.userAnswers[q.id] = opt;
+        },
+
+        nextQuestion() {
+            if (this.currentQuestionIndex < this.currentAssessment.questions.length - 1) {
+                this.currentQuestionIndex++;
+                var nextQ = this.currentAssessment.questions[this.currentQuestionIndex];
+                this.selectedOption = this.userAnswers[nextQ.id] || '';
+            }
+        },
+
+        prevQuestion() {
+            if (this.currentQuestionIndex > 0) {
+                this.currentQuestionIndex--;
+                var prevQ = this.currentAssessment.questions[this.currentQuestionIndex];
+                this.selectedOption = this.userAnswers[prevQ.id] || '';
+            }
+        },
+
+        formatTimer() {
+            var m = Math.floor(this.timerSeconds / 60);
+            var s = this.timerSeconds % 60;
+            return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        },
+
+        async submitTest() {
+            clearInterval(this.timerInterval);
+            this.isSubmitting = true;
+            try {
+                var res = await fetch('/api/assessments/submit/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        assessment_id: this.currentAssessment.id,
+                        answers: this.userAnswers
+                    })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    this.resultData = data;
+                    this.testActive = false;
+                    this.testCompleted = true;
+                } else {
+                    alert(data.error || 'Submission error');
+                    this.testActive = false;
+                }
+            } catch (err) {
+                alert('Network error submitting assessment.');
+                this.testActive = false;
+            } finally {
+                this.isSubmitting = false;
+            }
+        },
+
+        resetToSelector() {
+            this.testActive = false;
+            this.testCompleted = false;
+            this.resultData = null;
+            clearInterval(this.timerInterval);
+        },
+
+        init() {
+            if (this.fieldsData && this.fieldsData.length > 0) {
+                this.selectedFieldId = this.fieldsData[0].id;
+                this.onFieldChange();
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

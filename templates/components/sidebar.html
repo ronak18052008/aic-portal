@@ -1,0 +1,63 @@
+<aside class="bg-white border-r border-slate-200 transition-all duration-300 z-20 flex flex-col shrink-0"
+       :class="{ 'w-64': !sidebarCollapsed, 'w-20': sidebarCollapsed, 'hidden md:flex': true }">
+    
+    <!-- Sidebar Profile Top Info -->
+    <div class="p-4 border-b border-slate-100 flex items-center space-x-3" x-show="!sidebarCollapsed">
+        {% if user_profile and user_profile.thumbnail %}
+            <img src="{{ user_profile.thumbnail.url }}" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-brand-500 shadow-sm">
+        {% else %}
+            <div class="w-10 h-10 rounded-full bg-brand-800 text-white flex items-center justify-center font-bold text-xs shadow-sm border-2 border-brand-400">
+                {{ user_profile.get_avatar_initials|default:"RM" }}
+            </div>
+        {% endif %}
+        <div class="overflow-hidden">
+            <h4 class="text-xs font-bold text-slate-900 truncate">{{ user.get_full_name }}</h4>
+            <p class="text-[11px] font-medium text-brand-600 truncate">{{ user.get_sub_role_display }}</p>
+            <p class="text-[10px] text-slate-400 truncate">{{ user.organization_name|default:"Verified Member" }}</p>
+        </div>
+    </div>
+
+    <!-- Navigation List -->
+    <nav class="flex-1 overflow-y-auto p-3 space-y-4">
+        {% for cat in sidebar_categories %}
+        <div x-data="{ expanded: false }" class="space-y-1">
+            
+            <!-- Category Header -->
+            <button @click="expanded = !expanded" class="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 transition-colors">
+                <span class="flex items-center space-x-2" x-show="!sidebarCollapsed">
+                    <span>{{ cat.title }}</span>
+                </span>
+                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" :class="{ 'rotate-180': !expanded }" x-show="!sidebarCollapsed"></i>
+            </button>
+
+            <!-- Category Items -->
+            <div x-show="expanded" class="space-y-0.5">
+                {% for item in cat.items %}
+                <a href="{{ item.url }}" 
+                   class="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-all hover:bg-brand-50 hover:text-brand-700 text-slate-600 group">
+                    
+                    <span class="flex items-center space-x-2.5 truncate">
+                        <i class="fa-solid fa-circle-dot text-[8px] text-brand-400 group-hover:scale-125 transition-transform" x-show="!sidebarCollapsed"></i>
+                        <span x-show="!sidebarCollapsed" class="truncate">{{ item.name }}</span>
+                    </span>
+
+                    {% if item.badge %}
+                    <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-brand-100 text-brand-800" x-show="!sidebarCollapsed">
+                        {{ item.badge }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="p-3 border-t border-slate-100 bg-slate-50/50" x-show="!sidebarCollapsed">
+        <a href="/sources/" class="flex items-center space-x-2 text-[11px] font-semibold text-slate-500 hover:text-brand-600">
+            <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+            <span>Real Source Provenance</span>
+        </a>
+    </div>
+</aside>

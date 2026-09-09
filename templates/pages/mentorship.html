@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}Industry & Academic Mentorship Marketplace | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8" x-data="{ requestModalOpen: false, selectedMentor: '', requestSent: false }">
+
+    <!-- Hero / Header Banner -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-full border border-purple-200 tracking-wider">
+                        <i class="fa-solid fa-graduation-cap mr-1"></i>GLOBAL MENTORSHIP ENGINE
+                    </span>
+                    <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-full border border-emerald-200">
+                        <i class="fa-solid fa-circle-check mr-1"></i>100% Industry Verified
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Worldwide Industry & Academic Mentors</h1>
+                <p class="text-xs text-slate-500 max-w-2xl leading-relaxed">
+                    Connect directly with distinguished engineering directors, research scientists, and academic leaders from Google DeepMind, Microsoft, NVIDIA, Goldman Sachs, Tesla, Novartis, and top global universities.
+                </p>
+            </div>
+
+            <!-- Mentor Search Bar -->
+            <form action="/mentorship/" method="GET" class="w-full md:w-auto flex items-center gap-2">
+                <div class="relative w-full md:w-72">
+                    <input type="text" name="q" value="{{ query }}" placeholder="Search by name, company, skill..."
+                           class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                </div>
+                {% if org_filter %}
+                <input type="hidden" name="org" value="{{ org_filter }}">
+                {% endif %}
+                <button type="submit" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all shrink-0">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Filter Pills by Top Organization -->
+        <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-100">
+            <span class="text-xs font-extrabold uppercase text-slate-400 mr-2">Top Organizations:</span>
+            <a href="/mentorship/{% if query %}?q={{ query }}{% endif %}"
+               class="px-3 py-1 rounded-full text-xs font-bold transition-all {% if not org_filter %}bg-purple-600 text-white shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                All Mentors ({{ total_mentors }})
+            </a>
+            {% for org in top_orgs %}
+            <a href="/mentorship/?org={{ org|urlencode }}{% if query %}&q={{ query }}{% endif %}"
+               class="px-3 py-1 rounded-full text-xs font-bold transition-all {% if org_filter == org %}bg-purple-600 text-white shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                {{ org }}
+            </a>
+            {% endfor %}
+            {% if org_filter or query %}
+            <a href="/mentorship/" class="text-xs font-bold text-slate-400 hover:text-red-500 ml-2">
+                <i class="fa-solid fa-xmark mr-1"></i>Reset Filters
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active Mentorship Sessions Section -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <h2 class="text-base sm:text-lg font-black text-slate-900">
+                    {% if pairings %}Your Active Mentorship Sessions{% else %}Active Industry Mentorship Engagements{% endif %}
+                </h2>
+            </div>
+            <span class="text-xs text-slate-400 font-semibold">1:1 Bi-Weekly Video Guidance</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for pair in pairings %}
+            <div class="bg-white p-5 rounded-2xl border border-purple-200 hover:shadow-md transition-all space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="px-2.5 py-0.5 bg-purple-100 text-purple-800 font-extrabold rounded-full uppercase tracking-wider">
+                            Active Session
+                        </span>
+                        <span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Connected</span>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-900 leading-snug">{{ pair.topic }}</h3>
+                    <div class="pt-2 text-xs space-y-1 text-slate-600 border-t border-slate-100">
+                        <p><strong class="text-slate-800">Mentor:</strong> {{ pair.mentor.get_full_name }} <span class="text-slate-400">({{ pair.mentor.organization_name }})</span></p>
+                        <p><strong class="text-slate-800">Mentee:</strong> {{ pair.mentee.get_full_name }}</p>
+                    </div>
+                </div>
+                {% if pair.meeting_link %}
+                <a href="{{ pair.meeting_link }}" target="_blank" rel="noopener noreferrer"
+                   class="block text-center text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl shadow transition-all">
+                    <i class="fa-solid fa-video mr-1.5"></i>Launch Video Session →
+                </a>
+                {% endif %}
+            </div>
+            {% empty %}
+                {% for fpair in featured_pairings %}
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-purple-300 transition-all space-y-3 flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="px-2.5 py-0.5 bg-purple-50 text-purple-700 font-extrabold rounded-full uppercase tracking-wider">
+                                Featured Session
+                            </span>
+                            <span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Active</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900 leading-snug">{{ fpair.topic }}</h3>
+                        <div class="pt-2 text-xs space-y-1 text-slate-600 border-t border-slate-100">
+                            <p><strong class="text-slate-800">Mentor:</strong> {{ fpair.mentor.get_full_name }} <span class="text-slate-400">({{ fpair.mentor.organization_name }})</span></p>
+                            <p><strong class="text-slate-800">Mentee:</strong> {{ fpair.mentee.get_full_name }}</p>
+                        </div>
+                    </div>
+                    {% if fpair.meeting_link %}
+                    <a href="{{ fpair.meeting_link }}" target="_blank" rel="noopener noreferrer"
+                       class="block text-center text-xs font-bold bg-slate-100 hover:bg-purple-600 hover:text-white text-slate-700 py-2.5 rounded-xl transition-all">
+                        <i class="fa-solid fa-video mr-1.5"></i>Observe Sample Session →
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Verified Industry Mentors Directory -->
+    <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+                <h2 class="text-lg sm:text-xl font-black text-slate-900">Available Industry Mentors Directory</h2>
+                <p class="text-xs text-slate-500">Showing {{ total_mentors }} distinguished practitioners ready for technical guidance</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+                <i class="fa-solid fa-bolt text-amber-500"></i> Average response time: <span class="text-slate-800">Within 24 Hours</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for mentor in mentors %}
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 hover:border-purple-300 hover:shadow-lg transition-all flex flex-col justify-between space-y-4 group">
+                <div class="space-y-4">
+                    <!-- Top Profile & Company -->
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-brand-700 text-white flex items-center justify-center font-black text-base shadow-md shrink-0">
+                            {{ mentor.profile.get_avatar_initials|default:mentor.first_name|slice:":1" }}
+                        </div>
+                        <div class="overflow-hidden space-y-0.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <h3 class="font-black text-sm text-slate-900 group-hover:text-purple-600 transition-colors">
+                                    {{ mentor.get_full_name }}
+                                </h3>
+                                <span class="text-brand-500 text-xs" title="Identity & Employment Verified">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </span>
+                            </div>
+                            <p class="text-xs font-extrabold text-purple-700 truncate">
+                                <i class="fa-solid fa-building mr-1"></i>{{ mentor.organization_name }}
+                            </p>
+                            <p class="text-xs text-slate-500 truncate">
+                                {{ mentor.department_name|default:"Engineering & Research" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Headline -->
+                    {% if mentor.profile.headline %}
+                    <p class="text-xs font-semibold text-slate-700 line-clamp-2 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        {{ mentor.profile.headline }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Location & Details -->
+                    <div class="space-y-1.5 text-xs text-slate-500">
+                        {% if mentor.profile.location %}
+                        <p class="flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-location-dot text-slate-400"></i>
+                            <span>{{ mentor.profile.location }}</span>
+                        </p>
+                        {% endif %}
+                        <p class="flex items-center gap-1.5 text-emerald-700 font-bold">
+                            <i class="fa-solid fa-clock text-emerald-500"></i>
+                            <span>Accepting Students for 1:1 Review</span>
+                        </p>
+                    </div>
+
+                    <!-- Bio -->
+                    {% if mentor.profile.bio %}
+                    <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                        {{ mentor.profile.bio }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="pt-4 border-t border-slate-100 flex items-center gap-2">
+                    <button type="button"
+                            @click="selectedMentor = '{{ mentor.get_full_name|escapejs }} ({{ mentor.organization_name|escapejs }})'; requestModalOpen = true; requestSent = false;"
+                            class="flex-1 text-center py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-calendar-check mr-1"></i>Request 1:1 Guidance
+                    </button>
+                    {% if mentor.profile.linkedin_url %}
+                    <a href="{{ mentor.profile.linkedin_url }}" target="_blank" rel="noopener noreferrer"
+                       class="p-2.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-all"
+                       title="View LinkedIn Profile">
+                        <i class="fa-brands fa-linkedin-in text-sm"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-white p-12 rounded-3xl border border-slate-200 text-center text-slate-500 col-span-3 space-y-3">
+                <i class="fa-solid fa-user-tie text-4xl text-slate-300"></i>
+                <h3 class="font-bold text-sm text-slate-800">No mentors match your search filter</h3>
+                <p class="text-xs">Try clearing the search query or selecting a different organization.</p>
+                <a href="/mentorship/" class="inline-block mt-2 px-5 py-2 bg-purple-600 text-white text-xs font-bold rounded-xl shadow">
+                    View All Mentors
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Request Mentorship Interactive Modal -->
+    <div x-show="requestModalOpen" x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="requestModalOpen = false"
+             class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-100 transform transition-all">
+            
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-handshake"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900">Request 1:1 Mentorship</h3>
+                        <p class="text-xs text-slate-500" x-text="selectedMentor"></p>
+                    </div>
+                </div>
+                <button @click="requestModalOpen = false" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div x-show="!requestSent" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Guidance Topic / Objective</label>
+                    <input type="text" placeholder="e.g. LLM fine-tuning architecture review, Resume feedback, MLOps roadmap"
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Your Question / Project Summary</label>
+                    <textarea rows="4" placeholder="Briefly describe what you would like to discuss and questions you have prepared..."
+                              class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+
+                <div class="p-3 bg-purple-50 border border-purple-100 rounded-2xl text-xs text-purple-800 space-y-1">
+                    <p class="font-bold"><i class="fa-solid fa-shield-halved mr-1 text-purple-600"></i>Automatic AIC Passport Sharing</p>
+                    <p class="text-purple-600">Your verified AIC Passport and competency profile will be shared with the mentor so they can review your technical background prior to the session.</p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" @click="requestModalOpen = false"
+                            class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all">
+                        Cancel
+                    </button>
+                    <button type="button" @click="requestSent = true"
+                            class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all">
+                        <i class="fa-solid fa-paper-plane mr-1.5"></i>Send Mentorship Request
+                    </button>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div x-show="requestSent" class="text-center py-6 space-y-4">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-lg font-black text-slate-900">Mentorship Request Dispatched!</h4>
+                    <p class="text-xs text-slate-600 max-w-sm mx-auto">
+                        Your request has been routed to <span class="font-bold text-purple-700" x-text="selectedMentor"></span> along with your verified AIC Passport. You will receive an email and in-portal alert once the session slot is confirmed.
+                    </p>
+                </div>
+                <button type="button" @click="requestModalOpen = false; requestSent = false"
+                        class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow transition-all">
+                    Done
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Institution Intelligence Dashboard | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-2">
+        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">INSTITUTION INTELLIGENCE</span>
+        <h2 class="text-2xl font-black text-slate-900">University & College Placement & Skill Intelligence</h2>
+        <p class="text-xs text-slate-500">Analyze department skill heatmaps, curriculum-industry gaps, and placement metrics.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Enrolled Students</span>
+            <p class="text-3xl font-black text-slate-900">{{ total_students }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Active Courses</span>
+            <p class="text-3xl font-black text-brand-600">{{ total_courses }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Placements Extended</span>
+            <p class="text-3xl font-black text-emerald-600">{{ total_placements }}</p>
+        </div>
+    </div>
+
+    <!-- Quick Command Hub -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="/recruitment/campus/" class="bg-white p-6 rounded-3xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all space-y-2 group">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <h3 class="text-base font-black text-slate-900 group-hover:text-emerald-700">Campus Recruitment Hub</h3>
+            <p class="text-xs text-slate-500">Track student placement applicants, live stage transitions, and recruitment funnel.</p>
+        </a>
+
+        <a href="/industry/partners/" class="bg-white p-6 rounded-3xl border border-slate-200 hover:border-brand-400 hover:shadow-md transition-all space-y-2 group">
+            <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-handshake"></i>
+            </div>
+            <h3 class="text-base font-black text-slate-900 group-hover:text-brand-700">Industry Collaboration Partners</h3>
+            <p class="text-xs text-slate-500">Browse corporate MoUs, joint research labs, and enterprise co-designed curricula.</p>
+        </a>
+
+        <a href="/skills/gap/" class="bg-white p-6 rounded-3xl border border-slate-200 hover:border-purple-400 hover:shadow-md transition-all space-y-2 group">
+            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-chart-simple"></i>
+            </div>
+            <h3 class="text-base font-black text-slate-900 group-hover:text-purple-700">Curriculum Industry Gap</h3>
+            <p class="text-xs text-slate-500">Inspect student cohort skill gaps, critical curriculum deficits, and FDP tracks.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

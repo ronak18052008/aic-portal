@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Skill Intelligence | AIC Portal{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+
+  <!-- Header -->
+  <div>
+    <h1 class="text-3xl font-black text-slate-900 flex items-center gap-3">
+      <span class="text-2xl">📡</span> Industry Skill Intelligence
+    </h1>
+    <p class="text-slate-500 text-sm mt-1">
+      Real-time comparison of industry skill demand vs. student skill supply.
+      <span class="text-slate-400 text-xs ml-2">Data sourced from portal job postings, challenges, and verified student profiles.</span>
+    </p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm text-center">
+      <div class="text-3xl font-black text-slate-900">{{ total_skills_tracked }}</div>
+      <div class="text-slate-500 text-xs font-semibold mt-1">Skills Tracked</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-red-100 p-5 shadow-sm text-center">
+      <div class="text-3xl font-black text-red-600">{{ total_critical_gaps }}</div>
+      <div class="text-slate-500 text-xs font-semibold mt-1">Critical Skill Gaps</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-amber-100 p-5 shadow-sm text-center">
+      <div class="text-3xl font-black text-amber-600">{{ most_demanded|length }}</div>
+      <div class="text-slate-500 text-xs font-semibold mt-1">Top Demanded</div>
+    </div>
+    <div class="bg-white rounded-2xl border border-emerald-100 p-5 shadow-sm text-center">
+      <div class="text-3xl font-black text-emerald-600">{{ oversupplied|length }}</div>
+      <div class="text-slate-500 text-xs font-semibold mt-1">Oversupplied Skills</div>
+    </div>
+  </div>
+
+  <!-- Personal Gap for Students -->
+  {% if personal_gap %}
+  <div class="bg-gradient-to-r from-brand-50 to-purple-50 rounded-2xl border border-brand-200 p-6 shadow-sm">
+    <h2 class="font-black text-slate-800 text-lg mb-4">🎯 Your Industry Skill Gap</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for item in personal_gap %}
+      <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border {% if item.is_gap %}border-red-100{% else %}border-emerald-100{% endif %} shadow-sm">
+        <div class="text-lg">{% if item.is_gap %}⚠️{% else %}✅{% endif %}</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-bold text-slate-800 truncate">{{ item.node.name }}</div>
+          <div class="text-xs text-slate-500 mt-0.5">
+            You: <span class="font-bold {% if item.is_gap %}text-red-600{% else %}text-emerald-600{% endif %}">{{ item.my_score }}%</span>
+            | Industry needs: ~60%+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-4 flex gap-3">
+      <a href="/challenges/" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-bold">Bridge gaps with Challenges →</a>
+      <a href="/skills/assessments/" class="px-4 py-2 bg-white border border-brand-200 text-brand-700 rounded-xl text-sm font-bold">Take Assessments</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Industry Aggregated View -->
+  {% if industry_view %}
+  <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+    <h2 class="font-black text-slate-800 text-lg mb-1">🏭 Aggregated Talent Supply</h2>
+    <p class="text-slate-400 text-xs mb-4">Anonymized, aggregated data only. No individual student information exposed.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-xs text-slate-500 border-b border-slate-200">
+            <th class="pb-3 text-left font-semibold">Skill</th>
+            <th class="pb-3 text-center font-semibold">Total Students</th>
+            <th class="pb-3 text-center font-semibold">Intermediate+</th>
+            <th class="pb-3 text-center font-semibold">Verified</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for item in industry_view %}
+          <tr>
+            <td class="py-3 font-bold text-slate-800">{{ item.node.name }}</td>
+            <td class="py-3 text-center text-slate-600">{{ item.supply_total }}</td>
+            <td class="py-3 text-center font-bold text-emerald-600">{{ item.supply_intermediate_plus }}</td>
+            <td class="py-3 text-center text-sky-600">{{ item.supply_verified }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Supply vs Demand Bubble Chart -->
+  <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+    <h2 class="font-black text-slate-800 text-lg mb-1">Supply vs Demand Map</h2>
+    <p class="text-xs text-slate-400 mb-4">Bubble size = skill gap magnitude. Quadrants show strategic priority.</p>
+    <div class="relative" style="height: 420px;">
+      <canvas id="bubbleChart"></canvas>
+    </div>
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+      <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500 flex-shrink-0"></span><span class="text-slate-600">Critical Gap (High Demand, Low Supply)</span></div>
+      <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0"></span><span class="text-slate-600">Competitive (High Demand, High Supply)</span></div>
+      <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-400 flex-shrink-0"></span><span class="text-slate-600">Oversupplied (Low Demand, High Supply)</span></div>
+      <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-slate-400 flex-shrink-0"></span><span class="text-slate-600">Emerging (Low Demand, Low Supply)</span></div>
+    </div>
+  </div>
+
+  <!-- Top Skill Gaps Bar Chart -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <h2 class="font-black text-slate-800 text-lg mb-4">🔥 Top Skill Gaps</h2>
+      <div class="space-y-3">
+        {% for item in top_gaps %}
+        <div class="flex items-center gap-3">
+          <div class="w-32 text-xs font-semibold text-slate-700 truncate">{{ item.node.name }}</div>
+          <div class="flex-1 bg-slate-100 rounded-full h-3 relative overflow-hidden">
+            <div class="h-3 bg-red-400 rounded-full" style="width: {% widthratio item.demand item.demand|add:1 100 %}%"></div>
+            <div class="absolute top-0 left-0 h-3 bg-emerald-400 rounded-full opacity-80"
+                 style="width: {% widthratio item.supply_intermediate_plus item.demand|add:1 100 %}%"></div>
+          </div>
+          <div class="text-xs font-bold text-red-600 w-12 text-right">+{{ item.gap }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="mt-4 flex gap-4 text-xs">
+        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-400"></span><span class="text-slate-500">Demand</span></div>
+        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-400"></span><span class="text-slate-500">Supply</span></div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <h2 class="font-black text-slate-800 text-lg mb-4">🏆 Most Demanded Skills</h2>
+      <div class="space-y-3">
+        {% for item in most_demanded %}
+        <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+          <div class="text-2xl font-black text-slate-200">{{ forloop.counter }}</div>
+          <div class="flex-1">
+            <div class="font-bold text-slate-800 text-sm">{{ item.node.name }}</div>
+            <div class="text-xs text-slate-500">
+              Demand: <span class="font-bold text-red-600">{{ item.demand }}</span> |
+              Supply: <span class="font-bold text-emerald-600">{{ item.supply_intermediate_plus }}</span> |
+              Ratio: <span class="font-bold">{{ item.ratio }}x</span>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full
+            {% if item.quadrant == 'CRITICAL_GAP' %}bg-red-100 text-red-700{% elif item.quadrant == 'COMPETITIVE' %}bg-emerald-100 text-emerald-700{% elif item.quadrant == 'OVERSUPPLIED' %}bg-blue-100 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+            {{ item.quadrant_label }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Table -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+      <h2 class="font-black text-slate-800">All Skills — Supply-Demand Analysis</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-xs text-slate-500 border-b border-slate-200 bg-slate-50">
+            <th class="px-5 py-3 text-left font-semibold">Skill</th>
+            <th class="px-5 py-3 text-center font-semibold">Category</th>
+            <th class="px-5 py-3 text-center font-semibold">Demand Score</th>
+            <th class="px-5 py-3 text-center font-semibold">Supply (Intermediate+)</th>
+            <th class="px-5 py-3 text-center font-semibold">Gap</th>
+            <th class="px-5 py-3 text-center font-semibold">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for item in supply_demand %}
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-5 py-3 font-bold text-slate-800">{{ item.node.name }}</td>
+            <td class="px-5 py-3 text-center text-xs text-slate-500">{{ item.node.get_category_display }}</td>
+            <td class="px-5 py-3 text-center font-bold text-red-600">{{ item.demand }}</td>
+            <td class="px-5 py-3 text-center font-bold text-emerald-600">{{ item.supply_intermediate_plus }}</td>
+            <td class="px-5 py-3 text-center font-bold {% if item.gap > 0 %}text-red-600{% else %}text-emerald-600{% endif %}">
+              {% if item.gap > 0 %}+{{ item.gap }}{% else %}{{ item.gap }}{% endif %}
+            </td>
+            <td class="px-5 py-3 text-center">
+              <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full
+                {% if item.quadrant == 'CRITICAL_GAP' %}bg-red-100 text-red-700
+                {% elif item.quadrant == 'COMPETITIVE' %}bg-emerald-100 text-emerald-700
+                {% elif item.quadrant == 'OVERSUPPLIED' %}bg-blue-100 text-blue-700
+                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                {{ item.quadrant_label }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const bubbleData = {{ bubble_data|safe }};
+const colorMap = {
+  CRITICAL_GAP: 'rgba(239,68,68,0.7)',
+  COMPETITIVE: 'rgba(16,185,129,0.7)',
+  OVERSUPPLIED: 'rgba(59,130,246,0.7)',
+  EMERGING: 'rgba(148,163,184,0.7)',
+};
+
+new Chart(document.getElementById('bubbleChart'), {
+  type: 'bubble',
+  data: {
+    datasets: [{
+      label: 'Skills',
+      data: bubbleData,
+      backgroundColor: bubbleData.map(d => colorMap[d.quadrant] || 'rgba(148,163,184,0.7)'),
+      borderColor: bubbleData.map(d => colorMap[d.quadrant] || 'rgba(148,163,184,1)').map(c => c.replace('0.7','1')),
+      borderWidth: 1.5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            const d = ctx.raw;
+            return [`${d.label}`, `Supply: ${d.x}`, `Demand: ${d.y}`, `Status: ${d.quadrant.replace('_',' ')}`];
+          }
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Student Supply (Intermediate+)', font: { weight: 'bold' } }, min: 0 },
+      y: { title: { display: true, text: 'Industry Demand Score', font: { weight: 'bold' } }, min: 0 }
+    }
+  }
+});
+</script>
+{% endblock %}

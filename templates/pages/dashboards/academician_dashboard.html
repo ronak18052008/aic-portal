@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Academician Dashboard | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto"
+     x-data="{
+         // Modal states
+         showSkillModal: false,
+         showCollabModal: false,
+
+         // Form models
+         newSkillName: '',
+         newSkillScore: 92,
+         newSkillFieldId: '',
+         isAddingSkill: false,
+
+         collabTitle: '',
+         collabPartner: '',
+         collabAmount: 2500000,
+         collabDesc: '',
+         isProposingCollab: false,
+
+         async addFacultySkill() {
+             if (!this.newSkillName) return;
+             this.isAddingSkill = true;
+             try {
+                 const res = await fetch('/api/faculty/add-skill/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{ csrf_token }}'
+                     },
+                     body: JSON.stringify({
+                         skill_name: this.newSkillName,
+                         score: this.newSkillScore,
+                         field_id: this.newSkillFieldId
+                     })
+                 });
+                 const data = await res.json();
+                 if (data.success) {
+                     window.location.reload();
+                 } else {
+                     alert(data.error || 'Error adding skill');
+                 }
+             } catch (err) {
+                 alert('Network error adding skill.');
+             } finally {
+                 this.isAddingSkill = false;
+             }
+         },
+
+         async proposeCollab() {
+             if (!this.collabTitle || !this.collabPartner) return;
+             this.isProposingCollab = true;
+             try {
+                 const res = await fetch('/api/faculty/propose-collab/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{ csrf_token }}'
+                     },
+                     body: JSON.stringify({
+                         title: this.collabTitle,
+                         partner_org: this.collabPartner,
+                         funding_amount: this.collabAmount,
+                         description: this.collabDesc
+                     })
+                 });
+                 const data = await res.json();
+                 if (data.success) {
+                     window.location.reload();
+                 } else {
+                     alert(data.error || 'Error creating collaboration');
+                 }
+             } catch (err) {
+                 alert('Network error proposing collaboration.');
+             } finally {
+                 this.isProposingCollab = false;
+             }
+         }
+     }">
+
+    <!-- Welcome Header Banner -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="space-y-2">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-full border border-purple-200 uppercase tracking-wide">
+                    <i class="fa-solid fa-graduation-cap mr-1.5"></i>FACULTY & ACADEMICIAN PORTAL
+                </span>
+                <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                    Active Professor & Mentor
+                </span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900">Welcome, {{ user.get_full_name }}</h2>
+            <p class="text-sm text-slate-500">
+                Department of Computer Science & AI • {{ user.organization_name|default:"Indian Institute of Science & Technology" }}
+            </p>
+        </div>
+
+        <!-- Header Quick Action Buttons -->
+        <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" @click="showSkillModal = true" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Faculty Skill
+            </button>
+            <button type="button" @click="showCollabModal = true" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-handshake text-[10px]"></i> Propose Collaboration
+            </button>
+            <a href="/skills/gap/" class="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-bold text-xs rounded-xl shadow-sm transition-all inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-users-viewfinder text-[10px]"></i> Student Cohort Gap Analysis →
+            </a>
+        </div>
+    </div>
+
+    <!-- 1. Faculty Verified Skills & Competencies Section -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="font-black text-lg text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-award text-brand-600"></i>
+                    Faculty Verified Skills & Pedagogy Competencies ({{ faculty_skills.count }})
+                </h3>
+                <p class="text-xs text-slate-500">Accredited skills across advanced research, curriculum design, and distributed systems.</p>
+            </div>
+            <button type="button" @click="showSkillModal = true" class="text-xs font-bold text-brand-600 hover:underline">
+                + Add Competency
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for fs in faculty_skills %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 hover:bg-white hover:border-brand-300 transition-all shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-900">{{ fs.skill.name }}</h4>
+                        <span class="text-[11px] text-slate-500 font-semibold">{{ fs.skill.category }}</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold uppercase">{{ fs.proficiency }}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs pt-2 border-t border-slate-200 text-slate-600">
+                    <span><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i>{{ fs.verified_by|default:"Faculty Board" }}</span>
+                    <span class="font-black text-brand-700 font-mono">{{ fs.score_percentage }}%</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xs text-slate-400 col-span-3">
+                No faculty skills logged yet. Click "+ Add Faculty Skill" above to record research and teaching capabilities.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 2. Faculty Development Programmes (FDP) Catalog -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="font-black text-lg text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
+                    Faculty Development Programmes (FDP)
+                </h3>
+                <p class="text-xs text-slate-500">Official national FDP initiatives sponsored by AICTE ATAL, NPTEL, Microsoft, and NVIDIA.</p>
+            </div>
+            <a href="/search/?type=courses" class="text-xs font-bold text-brand-600 hover:underline">View All FDPs →</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for fdp in fdp_courses %}
+            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-brand-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold uppercase">{{ fdp.provider }}</span>
+                        <span class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-certificate mr-1"></i>Official FDP</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900 leading-snug line-clamp-2">{{ fdp.title }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ fdp.description }}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-600"><i class="fa-regular fa-clock mr-1"></i>{{ fdp.duration_hours }} Hours</span>
+                    <a href="{{ fdp.official_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow transition-all">
+                        Access FDP →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 3. Real Industry Collaborations & Research Grants Dataset -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="font-black text-lg text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-handshake text-emerald-600"></i>
+                    Industry Collaborations & Research Grants
+                </h3>
+                <p class="text-xs text-slate-500">Live corporate research partnerships and sponsored lab funding programs.</p>
+            </div>
+            <button type="button" @click="showCollabModal = true" class="text-xs font-bold text-emerald-600 hover:underline">
+                + Propose Collaboration
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for ig in industry_grants %}
+            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-emerald-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase">{{ ig.organization_name }}</span>
+                        <span class="text-xs font-black text-brand-900">₹{{ ig.stipend_salary|floatformat:0 }}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900 leading-snug">{{ ig.title }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ ig.description }}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-location-dot mr-1"></i>{{ ig.city }}, {{ ig.country }}</span>
+                    <a href="/research/" class="px-3 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow transition-all">
+                        View Grant Details →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 1: ADD FACULTY SKILL                                                -->
+    <!-- ========================================================================= -->
+    <div x-show="showSkillModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 border border-slate-200 shadow-2xl" @click.outside="showSkillModal = false">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-black text-slate-900">Add Faculty Skill Competency</h3>
+                    <p class="text-xs text-slate-500">Record a teaching, pedagogical, or technical specialization to your academic profile.</p>
+                </div>
+                <button type="button" @click="showSkillModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <form @submit.prevent="addFacultySkill()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Competency Name</label>
+                    <input type="text" x-model="newSkillName" placeholder="e.g. LLM Fine-Tuning & Prompt Engineering" required
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Proficiency Score (%)</label>
+                        <input type="number" x-model="newSkillScore" min="50" max="100" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Evidence Authority</label>
+                        <input type="text" value="Academic Senate / FDP Board" disabled class="w-full px-4 py-2.5 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-semibold">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="showSkillModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" :disabled="isAddingSkill" class="px-6 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow">
+                        <span x-text="isAddingSkill ? 'Saving...' : 'Add Competency'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 2: PROPOSE INDUSTRY COLLABORATION                                    -->
+    <!-- ========================================================================= -->
+    <div x-show="showCollabModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 space-y-5 border border-slate-200 shadow-2xl" @click.outside="showCollabModal = false">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-black text-slate-900">Propose Industry Collaboration</h3>
+                    <p class="text-xs text-slate-500">Initiate a joint R&D lab, corporate-sponsored grant, or student internship track.</p>
+                </div>
+                <button type="button" @click="showCollabModal = false" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+            </div>
+
+            <form @submit.prevent="proposeCollab()" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Project / Grant Title</label>
+                    <input type="text" x-model="collabTitle" placeholder="e.g. Generative AI Safety & Robustness Joint Research Lab" required
+                           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Partner Organization</label>
+                        <input type="text" x-model="collabPartner" placeholder="e.g. NVIDIA India / Microsoft" required
+                               class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Proposed Funding (₹)</label>
+                        <input type="number" x-model="collabAmount" min="100000" step="50000" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Brief Proposal Scope</label>
+                    <textarea x-model="collabDesc" rows="3" placeholder="Outline deliverables, student research fellowship positions, and infrastructure commitments..."
+                              class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 font-semibold"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" @click="showCollabModal = false" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" :disabled="isProposingCollab" class="px-6 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow">
+                        <span x-text="isProposingCollab ? 'Submitting...' : 'Register Proposal'"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Register | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-200 space-y-6">
+        
+        <div class="text-center space-y-2">
+            <img src="{{ aic_logo_url }}" alt="AIC Logo" class="h-12 w-auto mx-auto object-contain">
+            <h2 class="text-2xl font-black text-slate-900">Create your AIC Account</h2>
+            <p class="text-xs text-slate-500">Select your Primary Role in the Global Ecosystem</p>
+        </div>
+
+        {% if error %}
+        <div class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+
+            <!-- Primary Role Selection -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Primary Role</label>
+                <select name="primary_role" required class="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                    {% for key, val in roles %}
+                    {% if key != 'SYSTEM_ADMIN' %}
+                    <option value="{{ key }}">{{ val }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">First Name</label>
+                    <input type="text" name="first_name" required placeholder="Rohan" 
+                           class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Last Name</label>
+                    <input type="text" name="last_name" required placeholder="Mehta" 
+                           class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
+                <input type="email" name="email" required placeholder="your.name@institution.edu" 
+                       class="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Organization / Institution Name</label>
+                <input type="text" name="organization_name" placeholder="e.g. IIT Bombay / TechCorp" 
+                       class="w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+                <input type="password" name="password" required placeholder="Minimum 8 characters" 
+                       class="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg transition-all text-sm">
+                Create Account
+            </button>
+        </form>
+
+        <div class="text-center text-xs text-slate-500">
+            Already have an account? <a href="/login/" class="font-bold text-brand-600 hover:underline">Sign In</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

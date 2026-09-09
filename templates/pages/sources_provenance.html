@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Real Source Provenance & Verification | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-2">
+        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">SOURCE PROVENANCE ENGINE</span>
+        <h2 class="text-2xl font-black text-slate-900">Real Statutory & Enterprise Source Registry</h2>
+        <p class="text-xs text-slate-500">Every university, course, job, and degree record in AIC PORTAL is backed by authoritative source links.</p>
+    </div>
+
+    <!-- Active Statutory Sources -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-black text-slate-900 text-base">Active Statutory & University Sources</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for s in sources %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div class="flex justify-between items-start">
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded">ACTIVE</span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">{{ s.get_source_type_display }}</span>
+                </div>
+                <h4 class="font-bold text-sm text-slate-900">{{ s.name }}</h4>
+                <a href="{{ s.base_url }}" target="_blank" class="text-xs font-bold text-brand-600 truncate block hover:underline">
+                    {{ s.base_url }} <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Verification Audit Trail -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-black text-slate-900 text-base">Recent Verification Audit Log</h3>
+
+        <div class="divide-y divide-slate-100 text-xs">
+            {% for rec in records %}
+            <div class="py-3 flex items-center justify-between">
+                <div>
+                    <span class="font-bold text-slate-900">{{ rec.entity_type }} Record</span>
+                    <span class="text-slate-500 font-mono text-[11px] ml-2">#{{ rec.entity_id }}</span>
+                    <p class="text-[11px] text-slate-400">Verified by <strong>{{ rec.source.name }}</strong></p>
+                </div>
+                <a href="{{ rec.original_url }}" target="_blank" class="px-3 py-1 bg-slate-100 text-slate-700 hover:text-brand-600 rounded-lg font-bold">
+                    Official URL <i class="fa-solid fa-external-link text-[10px] ml-1"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+
+{% block title %}Industry Recruiter Dashboard | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+
+    <!-- Top Recruiter Header Banner -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="space-y-2 max-w-3xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-amber-50 text-amber-800 text-xs font-extrabold rounded-full border border-amber-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-building mr-1.5"></i>{{ user_org }}
+                    </span>
+                    <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                        <i class="fa-solid fa-shield-halved mr-1"></i>Verified Enterprise Recruiter
+                    </span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Enterprise Recruitment & Talent Discovery Engine</h2>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    AI-driven talent recommendation matching student competencies directly against your active job requisitions with transparent skill fit scores, AIC Passports, and full lifecycle pipeline tracking.
+                </p>
+            </div>
+            
+            <!-- Quick Action Buttons -->
+            <div class="flex flex-wrap sm:flex-nowrap gap-3 shrink-0 self-start">
+                <a href="/opportunities/create/" class="px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-2xl shadow-sm transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    Post New Requisition
+                </a>
+                <a href="/applications/manage/" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-brand-600"></i>
+                    Manage ATS Pipeline
+                </a>
+            </div>
+        </div>
+
+        <!-- ATS Quick Metric Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-slate-100">
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+                <span class="text-[11px] font-extrabold text-slate-500 uppercase block">Active Positions</span>
+                <span class="text-2xl font-black text-slate-900">{{ posted_opportunities.count }}</span>
+            </div>
+            <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-center">
+                <span class="text-[11px] font-extrabold text-blue-700 uppercase block">Total Applicants</span>
+                <span class="text-2xl font-black text-blue-800">{{ ats_metrics.total_applicants }}</span>
+            </div>
+            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-center">
+                <span class="text-[11px] font-extrabold text-amber-700 uppercase block">Screening</span>
+                <span class="text-2xl font-black text-amber-800">{{ ats_metrics.under_review }}</span>
+            </div>
+            <div class="p-3.5 bg-purple-50 border border-purple-200 rounded-2xl text-center">
+                <span class="text-[11px] font-extrabold text-purple-700 uppercase block">Shortlisted</span>
+                <span class="text-2xl font-black text-purple-800">{{ ats_metrics.shortlisted }}</span>
+            </div>
+            <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                <span class="text-[11px] font-extrabold text-emerald-700 uppercase block">Interviews / Offers</span>
+                <span class="text-2xl font-black text-emerald-800">{{ ats_metrics.interviews }} / {{ ats_metrics.offers }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- RECRUITER POSTED JOBS & REQUISITIONS (Posted by this Recruiter / Org)      -->
+    <!-- ========================================================================= -->
+    <div id="posted-jobs" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-extrabold rounded-full border border-brand-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-briefcase mr-1.5"></i>Recruiter Job Management
+                    </span>
+                    <span class="text-xs text-slate-500 font-semibold">Posted by {{ user_org }}</span>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 mt-2">My Posted Jobs & Active Requisitions</h3>
+                <p class="text-xs text-slate-500">Live positions created by your company. View applicants directly in ATS or match eligible students.</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="/opportunities/create/" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Post New Job
+                </a>
+            </div>
+        </div>
+
+        <!-- Jobs Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for item in annotated_posted_jobs %}
+            <div class="bg-white p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 hover:shadow-md
+                        {% if item.is_selected %}border-brand-500 ring-2 ring-brand-100{% else %}border-slate-200 hover:border-brand-300{% endif %}">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase
+                              {% if item.opp.opportunity_type == 'JOB' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                              {% elif item.opp.opportunity_type == 'INTERNSHIP' %}bg-purple-100 text-purple-800 border border-purple-200
+                              {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                            {{ item.opp.get_opportunity_type_display }}
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            {{ item.opp.get_mode_display }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-base text-slate-900 leading-snug">{{ item.opp.title }}</h4>
+                        <p class="text-xs text-slate-500 mt-1">
+                            <i class="fa-solid fa-location-dot mr-1 text-slate-400"></i>{{ item.opp.city|default:"Hybrid" }}, {{ item.opp.country }}
+                        </p>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Compensation</span>
+                            <span class="font-bold text-brand-700">₹{{ item.opp.stipend_salary|floatformat:0 }} <span class="text-[10px] text-slate-500">/ {{ item.opp.salary_period }}</span></span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Status</span>
+                            <span class="font-bold text-emerald-700"><i class="fa-solid fa-circle-dot text-[8px] text-emerald-500 mr-1"></i>Active</span>
+                        </div>
+                    </div>
+
+                    <!-- Required Skills Badges -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wide block">Required Skills ({{ item.opp.required_skills.count }}):</span>
+                        <div class="flex flex-wrap gap-1">
+                            {% for sk in item.opp.required_skills.all %}
+                            <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-semibold">
+                                {{ sk.name }}
+                            </span>
+                            {% empty %}
+                            <span class="text-xs text-slate-400 italic">General / All fields</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <a href="/applications/manage/?job_id={{ item.opp.id }}" class="font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-users text-[11px]"></i>
+                            {{ item.applicants_count }} Candidate{{ item.applicants_count|pluralize }} Applied
+                        </a>
+                        <span class="text-[11px] font-semibold text-emerald-700">
+                            {{ item.high_match_count }} High Fits
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <a href="/dashboard/?job_id={{ item.opp.id }}#talent-discovery" 
+                           class="flex-1 text-center py-2 text-xs font-bold rounded-xl transition-all
+                                  {% if item.is_selected %}bg-brand-600 text-white shadow-sm{% else %}bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200{% endif %}">
+                            {% if item.is_selected %}Selected in Discovery{% else %}Match Candidates →{% endif %}
+                        </a>
+                        <a href="/applications/manage/?job_id={{ item.opp.id }}" 
+                           class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all" title="View in ATS">
+                            <i class="fa-solid fa-users-gear"></i> ATS
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-3 p-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                <i class="fa-solid fa-briefcase text-3xl text-slate-300 mb-2"></i>
+                <p class="font-bold text-slate-600 text-sm">No jobs posted yet by your organization.</p>
+                <p class="text-xs text-slate-400 mt-1">Post your first position to start receiving applications and matching candidates.</p>
+                <a href="/opportunities/create/" class="inline-block mt-3 px-4 py-2 bg-brand-600 text-white font-bold text-xs rounded-xl shadow">
+                    + Post Job Requisition
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TALENT DISCOVERY: Student Match List with Job Required Skills Match %     -->
+    <!-- ========================================================================= -->
+    <div id="talent-discovery" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        
+        <!-- Header & Target Job Requisition Selector -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-extrabold rounded-full border border-brand-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-user-check mr-1.5"></i>Talent Discovery AI Engine
+                    </span>
+                    <span class="text-xs text-slate-500 font-semibold">Matched from {{ total_students_pool }} Enrolled Students</span>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 mt-2">Matched Candidates by Job Requirements</h3>
+                <p class="text-xs text-slate-500">Select any of your posted requisitions below to instantly rank candidates by required skill compatibility %.</p>
+            </div>
+
+            <!-- Job Selector Form -->
+            <form action="/dashboard/" method="GET" class="flex items-center gap-2">
+                <label class="text-xs font-extrabold uppercase text-slate-600 shrink-0">Filter By Role:</label>
+                <select name="job_id" onchange="this.form.submit()" class="px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 max-w-xs">
+                    {% for opp in posted_opportunities %}
+                    <option value="{{ opp.id }}" {% if selected_opp and selected_opp.id == opp.id %}selected{% endif %}>
+                        {{ opp.title }} ({{ opp.required_skills.count }} Skills Required)
+                    </option>
+                    {% empty %}
+                    <option value="">No active requisitions</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        {% if selected_opp %}
+        <!-- Selected Opportunity Overview Badge -->
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-md bg-emerald-100 text-emerald-800 uppercase">{{ selected_opp.get_opportunity_type_display }}</span>
+                    <span class="text-xs font-bold text-slate-700">{{ selected_opp.city }}, {{ selected_opp.country }}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="text-xs font-bold text-brand-700">₹{{ selected_opp.stipend_salary|floatformat:0 }} {{ selected_opp.salary_period }}</span>
+                </div>
+                <h4 class="font-bold text-base text-slate-900">{{ selected_opp.title }}</h4>
+                <div class="flex items-center gap-2 flex-wrap pt-1">
+                    <span class="text-xs font-bold text-slate-500">Required Skills for this role:</span>
+                    {% for sk in selected_opp.required_skills.all %}
+                    <span class="px-2.5 py-0.5 text-[11px] font-extrabold rounded-lg bg-white border border-slate-300 text-slate-800">
+                        {{ sk.name }}
+                    </span>
+                    {% empty %}
+                    <span class="text-xs text-slate-400 italic">No specific skills tagged. Showing overall top-scoring candidates.</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-2">
+                <a href="/opportunities/create/" class="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-all">
+                    + Post Another Role
+                </a>
+            </div>
+        </div>
+
+        <!-- Matched Candidate Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for c in matched_students %}
+            <div class="bg-white p-5 rounded-2xl border transition-all space-y-4 hover:shadow-md flex flex-col justify-between
+                        {% if c.match_pct >= 66 %}border-emerald-300 hover:border-emerald-500{% elif c.match_pct >= 40 %}border-amber-200 hover:border-amber-400{% else %}border-slate-200 hover:border-slate-300{% endif %}">
+                <div class="space-y-3">
+                    <!-- Candidate Header -->
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm shrink-0">
+                                {{ c.student.get_full_name|first|default:c.student.username|first|upper }}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900">{{ c.student.get_full_name|default:c.student.username }}</h4>
+                                <p class="text-xs text-slate-500">{{ c.student.email }}</p>
+                                <span class="text-[11px] font-semibold text-brand-600">{{ c.student.profile.headline|default:"Student Scholar • Digital Passport Verified" }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Percentage of Match Pill -->
+                        <div class="text-right shrink-0">
+                            <span class="px-3 py-1 rounded-full text-xs font-black inline-flex items-center gap-1
+                                  {% if c.match_pct >= 66 %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                                  {% elif c.match_pct >= 40 %}bg-amber-100 text-amber-800 border border-amber-200
+                                  {% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                                <i class="fa-solid fa-circle-check text-[10px]"></i>
+                                {{ c.match_pct }}% Match
+                            </span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5">{{ c.matched_skills|length }}/{{ selected_opp.required_skills.count|default:"3" }} Skills Met</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar for Match -->
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="h-2 rounded-full transition-all duration-500
+                             {% if c.match_pct >= 66 %}bg-emerald-500{% elif c.match_pct >= 40 %}bg-amber-500{% else %}bg-slate-400{% endif %}"
+                             style="width: {{ c.match_pct }}%;"></div>
+                    </div>
+
+                    <!-- Matched Skills Badges -->
+                    <div class="space-y-1">
+                        <span class="text-[11px] font-extrabold uppercase text-slate-400 block tracking-wider">Matched Required Skills:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for ms in c.matched_skills %}
+                            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                <i class="fa-solid fa-check text-[9px] text-emerald-600"></i>
+                                {{ ms }}
+                            </span>
+                            {% empty %}
+                            <span class="text-xs text-slate-400 italic">No exact required skills match yet.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Missing Skills Badges -->
+                    {% if c.missing_skills %}
+                    <div class="space-y-1">
+                        <span class="text-[11px] font-extrabold uppercase text-slate-400 block tracking-wider">Missing Required Skills:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for mis in c.missing_skills %}
+                            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-minus text-[9px] text-slate-400"></i>
+                                {{ mis }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Card Actions -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-bold text-slate-500">
+                        <i class="fa-solid fa-certificate text-brand-600 mr-1"></i>{{ c.verified_skills_count }} Verified Credentials
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <a href="/search/?q={{ c.student.first_name }}&type=students" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                            View Profile
+                        </a>
+                        <a href="/applications/manage/?q={{ c.student.email }}" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all">
+                            Track in ATS →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-2 p-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                No students enrolled currently.
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-12 text-center text-slate-500 border border-dashed border-slate-300 rounded-3xl space-y-3">
+            <i class="fa-solid fa-briefcase text-4xl text-slate-300"></i>
+            <h4 class="font-bold text-base text-slate-800">No Job Requisitions Posted Yet</h4>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">Post your first job or internship requisition with required skills to activate intelligent candidate matching and percentage fit calculations.</p>
+            <a href="/opportunities/create/" class="inline-block px-5 py-2.5 bg-brand-600 text-white font-bold text-xs rounded-xl shadow">
+                Post Job Requisition Now
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- APPLICANT TRACKING SYSTEM (ATS): Live Applicant Stage Management           -->
+    <!-- ========================================================================= -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-extrabold rounded-full border border-purple-200 uppercase tracking-wide">
+                    <i class="fa-solid fa-users-gear mr-1.5"></i>Recruitment Pipeline
+                </span>
+                <h3 class="text-xl font-black text-slate-900 mt-2">Active Candidates in ATS Pipeline</h3>
+                <p class="text-xs text-slate-500">Live submissions received from candidates for your open positions.</p>
+            </div>
+            <a href="/applications/manage/" class="text-xs font-bold text-brand-600 hover:underline">
+                Open Full ATS Board ({{ ats_metrics.total_applicants }} Total) →
+            </a>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            {% for app in recent_applications %}
+            <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 rounded-2xl px-3 transition-colors">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-brand-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                        {{ app.applicant.get_full_name|first|default:"A" }}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-bold text-sm text-slate-900 truncate">{{ app.applicant.get_full_name }}</h4>
+                            <span class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full uppercase
+                                  {% if app.status == 'APPLIED' %}bg-blue-100 text-blue-800
+                                  {% elif app.status == 'SCREENING' %}bg-amber-100 text-amber-800
+                                  {% elif app.status == 'ASSESSMENT' %}bg-purple-100 text-purple-800
+                                  {% elif app.status == 'SHORTLISTED' %}bg-indigo-100 text-indigo-800
+                                  {% elif app.status == 'INTERVIEW' %}bg-sky-100 text-sky-800
+                                  {% elif app.status == 'OFFER' or app.status == 'JOINED' %}bg-emerald-100 text-emerald-800
+                                  {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                {{ app.get_status_display }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 truncate mt-0.5">Applied for <span class="font-semibold text-slate-700">{{ app.opportunity.title }}</span> • {{ app.applied_at|date:"M d, Y" }}</p>
+                        {% if app.cover_note %}
+                        <p class="text-[11px] text-slate-600 italic line-clamp-1 mt-0.5">"{{ app.cover_note }}"</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="/applications/manage/?q={{ app.applicant.email }}" class="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs rounded-xl border border-brand-200 transition-all">
+                        Inspect Candidate & Advance Stage →
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-slate-400 text-xs">
+                No active applications received yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

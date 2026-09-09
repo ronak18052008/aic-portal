@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Universities & Institutions Directory | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Page Header -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900"><i class="fa-solid fa-university text-brand-600 mr-2"></i>Universities & Institutions Directory</h1>
+                <p class="text-xs text-slate-500 mt-1">Browse {{ total_count }} verified institutions from India and across the globe</p>
+            </div>
+            <form action="/institutions/" method="GET" class="flex gap-2 w-full sm:w-auto">
+                {% if institution_filter %}<input type="hidden" name="institution" value="{{ institution_filter }}">{% endif %}
+                {% if type_filter %}<input type="hidden" name="type" value="{{ type_filter }}">{% endif %}
+                {% if country_filter %}<input type="hidden" name="country" value="{{ country_filter }}">{% endif %}
+                {% if state_filter %}<input type="hidden" name="state" value="{{ state_filter }}">{% endif %}
+                {% if naac_filter %}<input type="hidden" name="naac" value="{{ naac_filter }}">{% endif %}
+                {% if verified_only %}<input type="hidden" name="verified" value="1">{% endif %}
+                <input type="text" name="q" value="{{ query }}" placeholder="Search by name, city, state..." class="flex-1 sm:w-64 px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white">
+                <button type="submit" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow transition-all"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Grid: Filters + Results -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Smart Filters Sidebar -->
+        <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-5 self-start">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-slate-900"><i class="fa-solid fa-filter text-brand-600 mr-2"></i>Smart Filters</h3>
+                <a href="/institutions/" class="text-[11px] font-bold text-slate-400 hover:text-brand-600">Clear All</a>
+            </div>
+
+            <form action="/institutions/" method="GET" class="space-y-4">
+                <input type="hidden" name="q" value="{{ query }}">
+
+                <!-- Select Specific Institution Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Select Institution</label>
+                    <select name="institution" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 font-medium">
+                        <option value="">All Institutions ({{ all_institutions.count }})</option>
+                        {% for inst in all_institutions %}
+                        <option value="{{ inst.slug }}" {% if institution_filter == inst.slug %}selected{% endif %}>{{ inst.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Institution Type Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Institution Type</label>
+                    <select name="type" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Types</option>
+                        {% for value, label in institution_types %}
+                        <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Country Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">Country</label>
+                    <select name="country" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Countries</option>
+                        {% for c in countries %}
+                        <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- State Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">State / Province</label>
+                    <select name="state" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All States</option>
+                        {% for s in states %}
+                        <option value="{{ s }}" {% if state_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- NAAC Grade Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">NAAC Grade</label>
+                    <select name="naac" onchange="this.form.submit()" class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="">All Grades</option>
+                        {% for g in naac_grades %}
+                        <option value="{{ g }}" {% if naac_filter == g %}selected{% endif %}>{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Verified Toggle -->
+                <div class="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                    <input type="checkbox" id="verified" name="verified" value="1" {% if verified_only %}checked{% endif %} onchange="this.form.submit()" class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="verified" class="text-xs font-bold text-slate-700">UGC Recognised Only</label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Institution Results Grid -->
+        <div class="lg:col-span-3 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <p class="text-xs font-bold text-slate-500">Showing {{ total_count }} institution{{ total_count|pluralize }}</p>
+                <div class="flex gap-2 flex-wrap items-center">
+                    {% if institution_filter or type_filter or country_filter or state_filter or naac_filter or verified_only %}
+                    <span class="text-[11px] font-bold text-slate-500 mr-1">Active Filters:</span>
+                    {% endif %}
+                    {% if institution_filter %}
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-brand-100 text-brand-800 border border-brand-200 inline-flex items-center gap-1.5">
+                        <i class="fa-solid fa-university text-[10px]"></i> {{ selected_institution.name|default:institution_filter }}
+                        <a href="/institutions/?q={{ query }}&type={{ type_filter }}&country={{ country_filter }}&state={{ state_filter }}&naac={{ naac_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-brand-500 hover:text-brand-800">&times;</a>
+                    </span>
+                    {% endif %}
+                    {% if type_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-brand-100 text-brand-700 border border-brand-200">{{ type_filter }} <a href="/institutions/?q={{ query }}&institution={{ institution_filter }}&country={{ country_filter }}&state={{ state_filter }}&naac={{ naac_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-brand-400 hover:text-brand-700">&times;</a></span>{% endif %}
+                    {% if country_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">{{ country_filter }} <a href="/institutions/?q={{ query }}&institution={{ institution_filter }}&type={{ type_filter }}&state={{ state_filter }}&naac={{ naac_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-blue-400 hover:text-blue-700">&times;</a></span>{% endif %}
+                    {% if state_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">{{ state_filter }} <a href="/institutions/?q={{ query }}&institution={{ institution_filter }}&type={{ type_filter }}&country={{ country_filter }}&naac={{ naac_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-indigo-400 hover:text-indigo-700">&times;</a></span>{% endif %}
+                    {% if naac_filter %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">NAAC {{ naac_filter }} <a href="/institutions/?q={{ query }}&institution={{ institution_filter }}&type={{ type_filter }}&country={{ country_filter }}&state={{ state_filter }}{% if verified_only %}&verified=1{% endif %}" class="ml-1 text-emerald-400 hover:text-emerald-700">&times;</a></span>{% endif %}
+                    {% if verified_only %}<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700 border border-purple-200">UGC Only <a href="/institutions/?q={{ query }}&institution={{ institution_filter }}&type={{ type_filter }}&country={{ country_filter }}&state={{ state_filter }}&naac={{ naac_filter }}" class="ml-1 text-purple-400 hover:text-purple-700">&times;</a></span>{% endif %}
+                    {% if institution_filter or type_filter or country_filter or state_filter or naac_filter or verified_only %}
+                    <a href="/institutions/" class="text-[11px] font-bold text-red-500 hover:text-red-700 ml-2">Clear All</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for inst in institutions %}
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 hover:border-brand-400 hover:shadow-md shadow-sm space-y-3 flex flex-col justify-between transition-all">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="px-2 py-0.5 rounded font-extrabold bg-blue-100 text-blue-800 uppercase">{{ inst.get_institution_type_display }}</span>
+                            {% if inst.nirf_rank %}
+                            <span class="font-bold text-emerald-600"><i class="fa-solid fa-award mr-1"></i>NIRF #{{ inst.nirf_rank }}</span>
+                            {% endif %}
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900">{{ inst.name }}</h4>
+                        {% if inst.official_name and inst.official_name != inst.name %}
+                        <p class="text-[11px] text-slate-400">{{ inst.official_name }}</p>
+                        {% endif %}
+                        <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i>{{ inst.city }}, {{ inst.state }}, {{ inst.country }}</p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            {% if inst.naac_grade %}
+                            <span class="text-xs font-bold text-slate-600">NAAC {{ inst.naac_grade }}</span>
+                            {% endif %}
+                            {% if inst.ugc_recognized %}
+                            <span class="text-[10px] font-bold text-emerald-600"><i class="fa-solid fa-shield-halved mr-0.5"></i>UGC</span>
+                            {% endif %}
+                        </div>
+                        {% if inst.website %}
+                        <a href="{{ inst.website }}" target="_blank" class="text-xs font-bold text-brand-600 hover:underline">
+                            Official Website <i class="fa-solid fa-arrow-up-right-from-square text-[10px] ml-1"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 text-xs col-span-2">
+                    <i class="fa-solid fa-university text-3xl text-slate-300 mb-3"></i>
+                    <p class="font-bold">No institutions found matching your filters.</p>
+                    <p class="mt-1">Try broadening your search criteria or <a href="/institutions/" class="text-brand-600 font-bold hover:underline">clear all filters</a>.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

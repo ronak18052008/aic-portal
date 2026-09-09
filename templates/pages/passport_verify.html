@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify AIC Passport — {{ passport.passport_number }} | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Official Verification Banner -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+            <div class="space-y-1">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    Officially Verified Credential
+                </div>
+                <h1 class="text-2xl font-black text-slate-900 mt-2">{{ passport.user.get_full_name }}</h1>
+                <p class="text-xs text-slate-500 font-semibold">
+                    <i class="fa-solid fa-university text-brand-600 mr-1.5"></i>{{ passport.user.organization_name|default:"Verified AIC Global Scholar" }}
+                </p>
+            </div>
+            
+            <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-center shrink-0 self-start sm:self-center">
+                <span class="text-[10px] font-extrabold uppercase text-emerald-700 block">AUTHENTICITY</span>
+                <span class="text-xl font-black text-emerald-800"><i class="fa-solid fa-shield-halved mr-1 text-emerald-600"></i>VALID</span>
+                <span class="text-[10px] text-slate-500 block">Issued {{ passport.issued_date|date:"M d, Y" }}</span>
+            </div>
+        </div>
+
+        <!-- Credential Metadata Details -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+            <div>
+                <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Passport Number</span>
+                <span class="font-mono font-bold text-slate-900">{{ passport.passport_number }}</span>
+            </div>
+            <div>
+                <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Verification Token</span>
+                <span class="font-mono text-[10px] text-slate-600 truncate block">{{ passport.qr_verification_token }}</span>
+            </div>
+            <div>
+                <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Statutory Status</span>
+                <span class="font-bold text-emerald-700">Verified by AIC Ledger</span>
+            </div>
+        </div>
+
+        <!-- Verified Skills List -->
+        <div class="space-y-3">
+            <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center justify-between">
+                <span>Verified Competencies & Evidence ({{ user_skills.count }})</span>
+                <span class="text-[11px] font-bold text-slate-400">All assessments tamper-proof</span>
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {% for us in user_skills %}
+                <div class="p-3.5 bg-white rounded-xl border border-slate-200 hover:border-brand-400 shadow-sm flex items-center justify-between transition-all">
+                    <div>
+                        <h4 class="font-bold text-xs text-slate-900">{{ us.skill.name }}</h4>
+                        <span class="text-[10px] text-slate-500 font-medium">{{ us.get_evidence_type_display }}</span>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-brand-100 text-brand-800">
+                        {{ us.proficiency }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 col-span-2">No verified skills recorded yet for this passport.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- QR Code Verification Card -->
+        <div class="p-4 bg-gradient-to-r from-brand-900 to-brand-800 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="space-y-1 text-center sm:text-left">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-400">Public Verifier Key</h4>
+                <p class="text-xs text-slate-200">
+                    This verification was generated live from the central AIC registry.
+                </p>
+                <span class="text-[10px] font-mono text-slate-400 block mt-1">Verification URL: {{ verification_url }}</span>
+            </div>
+            <div class="bg-white p-2 rounded-xl text-center shrink-0 shadow-md">
+                <img src="{{ qr_code_data_uri }}" alt="QR Code" class="w-20 h-20 object-contain">
+            </div>
+        </div>
+
+        <!-- Footer Back Nav -->
+        <div class="pt-2 text-center">
+            <a href="/" class="text-xs font-bold text-brand-600 hover:text-brand-800">
+                ← Return to AIC Platform Home
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

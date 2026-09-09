@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Account & Role Settings | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6" x-data="{ activeTab: 'role' }">
+
+    <!-- Header Card -->
+    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-black uppercase tracking-wider">
+                <i class="fa-solid fa-gear text-brand-600"></i>
+                Preferences & Security
+            </div>
+            <h1 class="text-2xl font-black text-slate-900">Settings & Configuration</h1>
+            <p class="text-xs text-slate-500">Configure your personal preferences, role-tailored discovery settings, notifications, and security.</p>
+        </div>
+
+        <span class="px-3.5 py-1.5 bg-brand-50 border border-brand-200 rounded-2xl text-xs font-bold text-brand-800 uppercase shrink-0">
+            <i class="fa-solid fa-id-badge text-brand-600 mr-1.5"></i>{{ role|default:"Scholar" }}
+        </span>
+    </div>
+
+    <!-- Success Feedback Alert -->
+    {% if saved %}
+    <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-900 text-xs font-bold animate-fadeIn">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+        <span>Settings successfully saved and synchronized across the ecosystem!</span>
+    </div>
+    {% endif %}
+
+    <!-- Settings Navigation Tabs -->
+    <div class="flex gap-2 border-b border-slate-200 pb-2">
+        <button type="button" @click="activeTab = 'role'" :class="{ 'bg-brand-600 text-white shadow': activeTab === 'role', 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50': activeTab !== 'role' }" class="px-4 py-2 rounded-2xl text-xs font-black transition-all">
+            <i class="fa-solid fa-sliders mr-1.5"></i>Role Preferences
+        </button>
+        <button type="button" @click="activeTab = 'account'" :class="{ 'bg-brand-600 text-white shadow': activeTab === 'account', 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50': activeTab !== 'account' }" class="px-4 py-2 rounded-2xl text-xs font-black transition-all">
+            <i class="fa-solid fa-user mr-1.5"></i>Account Details
+        </button>
+        <button type="button" @click="activeTab = 'notifications'" :class="{ 'bg-brand-600 text-white shadow': activeTab === 'notifications', 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50': activeTab !== 'notifications' }" class="px-4 py-2 rounded-2xl text-xs font-black transition-all">
+            <i class="fa-solid fa-bell mr-1.5"></i>Notifications
+        </button>
+        <button type="button" @click="activeTab = 'security'" :class="{ 'bg-brand-600 text-white shadow': activeTab === 'security', 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50': activeTab !== 'security' }" class="px-4 py-2 rounded-2xl text-xs font-black transition-all">
+            <i class="fa-solid fa-lock mr-1.5"></i>Security
+        </button>
+    </div>
+
+    <!-- TAB 1: ROLE-SPECIFIC PREFERENCES -->
+    <div x-show="activeTab === 'role'" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">
+                <i class="fa-solid fa-sliders text-brand-600 mr-2"></i>{{ role|default:"Scholar" }} Ecosystem Preferences
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Configure specialized behaviors for your role on the platform.</p>
+        </div>
+
+        <form method="POST" action="/settings/" class="space-y-5">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="role_settings">
+
+            {% if role == 'STUDENT' %}
+            <!-- Student Career Track & Visibility -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">Job & Internship Search Status</label>
+                    <select name="job_search_status" class="w-full sm:w-80 px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="ACTIVELY_LOOKING" {% if profile.job_search_status == 'ACTIVELY_LOOKING' %}selected{% endif %}>Actively Looking for Opportunities</option>
+                        <option value="OPEN" {% if profile.job_search_status == 'OPEN' %}selected{% endif %}>Open to Relevant Offers</option>
+                        <option value="NOT_LOOKING" {% if profile.job_search_status == 'NOT_LOOKING' %}selected{% endif %}>Not Looking Currently</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">AIC Passport Public Discoverability</label>
+                    <select name="visibility" class="w-full sm:w-80 px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="PUBLIC" {% if profile.visibility == 'PUBLIC' %}selected{% endif %}>Public — Anyone can view verified credentials</option>
+                        <option value="REGISTERED_USERS" {% if profile.visibility == 'REGISTERED_USERS' %}selected{% endif %}>Registered AIC Recruiters & Institutions Only</option>
+                        <option value="PRIVATE" {% if profile.visibility == 'PRIVATE' %}selected{% endif %}>Private — Only visible via direct QR token link</option>
+                    </select>
+                </div>
+            </div>
+
+            {% elif role == 'ACADEMICIAN' %}
+            <!-- Academician Preferences -->
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <input type="checkbox" id="mentorship_available" name="mentorship_available" value="1" {% if profile.mentorship_available %}checked{% endif %} class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="mentorship_available" class="text-xs font-bold text-slate-800">Available for Student Capstone Mentorship & Consultancies</label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">Research Profile Visibility</label>
+                    <select name="visibility" class="w-full sm:w-80 px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="PUBLIC" {% if profile.visibility == 'PUBLIC' %}selected{% endif %}>Public — Discoverable by industry R&D teams</option>
+                        <option value="REGISTERED_USERS" {% if profile.visibility == 'REGISTERED_USERS' %}selected{% endif %}>AIC Academicians Only</option>
+                    </select>
+                </div>
+            </div>
+
+            {% elif role == 'INDUSTRY' %}
+            <!-- Industry Recruiter Preferences -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">Candidate Minimum Skill Match Threshold (%)</label>
+                    <input type="number" name="candidate_match_threshold" value="{{ profile.candidate_match_threshold }}" min="50" max="100" class="w-48 px-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                    <p class="text-[11px] text-slate-400 mt-1">Candidates matching below this verified skill score will be auto-flagged for additional review.</p>
+                </div>
+
+                <div class="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <input type="checkbox" id="mentorship_available_ind" name="mentorship_available" value="1" {% if profile.mentorship_available %}checked{% endif %} class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="mentorship_available_ind" class="text-xs font-bold text-slate-800">Accepting Campus Hackathon & Research Project Pitches</label>
+                </div>
+            </div>
+
+            {% elif role == 'INSTITUTION' %}
+            <!-- Institution Preferences -->
+            <div class="space-y-4">
+                <div class="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <input type="checkbox" id="placement_sync" name="mentorship_available" value="1" {% if profile.mentorship_available %}checked{% endif %} class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="placement_sync" class="text-xs font-bold text-slate-800">Enable Live Placement Intelligence Reporting to NIRF/NAAC dashboards</label>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="pt-4 border-t border-slate-100">
+                <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                    Save Role Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 2: ACCOUNT DETAILS -->
+    <div x-show="activeTab === 'account'" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">
+                <i class="fa-solid fa-user text-brand-600 mr-2"></i>Personal & Organization Details
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Update your name, organization affiliation, and location.</p>
+        </div>
+
+        <form method="POST" action="/settings/" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="account_settings">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Organization / Institution</label>
+                <input type="text" name="organization_name" value="{{ user.organization_name|default:'' }}" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Headline / Designation</label>
+                <input type="text" name="headline" value="{{ profile.headline|default:'' }}" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location</label>
+                <input type="text" name="location" value="{{ profile.location|default:'' }}" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                    Update Account Details
+                </button>
+                <a href="/profile/" class="text-xs font-bold text-brand-600 hover:underline">Change Profile Photo →</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 3: NOTIFICATIONS -->
+    <div x-show="activeTab === 'notifications'" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">
+                <i class="fa-solid fa-bell text-brand-600 mr-2"></i>Email & Alert Settings
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Control when and how you receive alerts about matches, submissions, and portal updates.</p>
+        </div>
+
+        <form method="POST" action="/settings/" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="notification_settings">
+
+            <div class="space-y-3">
+                <div class="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <input type="checkbox" id="email_notifs" name="email_notifications" value="1" {% if profile.email_notifications %}checked{% endif %} class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="email_notifs" class="text-xs font-bold text-slate-800">Email Notifications for Application Status Changes</label>
+                </div>
+
+                <div class="flex items-center space-x-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                    <input type="checkbox" id="job_alerts" name="job_alerts" value="1" {% if profile.job_alerts %}checked{% endif %} class="rounded text-brand-600 focus:ring-brand-500">
+                    <label for="job_alerts" class="text-xs font-bold text-slate-800">AI Job & Internship Recommendations</label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 uppercase mb-1.5">Activity Digest Frequency</label>
+                    <select name="digest_frequency" class="w-full sm:w-80 px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                        <option value="INSTANT" {% if profile.digest_frequency == 'INSTANT' %}selected{% endif %}>Instant Alerts</option>
+                        <option value="DAILY" {% if profile.digest_frequency == 'DAILY' %}selected{% endif %}>Daily Digest</option>
+                        <option value="WEEKLY" {% if profile.digest_frequency == 'WEEKLY' %}selected{% endif %}>Weekly Summary</option>
+                        <option value="OFF" {% if profile.digest_frequency == 'OFF' %}selected{% endif %}>Turn Off All Digests</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100">
+                <button type="submit" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all">
+                    Save Notification Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- TAB 4: SECURITY -->
+    <div x-show="activeTab === 'security'" class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+            <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">
+                <i class="fa-solid fa-lock text-brand-600 mr-2"></i>Password & Security
+            </h3>
+            <p class="text-xs text-slate-500 mt-1">Keep your account secure by using a strong password.</p>
+        </div>
+
+        <form method="POST" action="/settings/" class="space-y-4 max-w-md">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password_change">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Current Password</label>
+                <input type="password" name="current_password" required class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">New Password</label>
+                <input type="password" name="new_password" required minlength="8" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Confirm New Password</label>
+                <input type="password" name="confirm_password" required minlength="8" class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div class="pt-4 border-t border-slate-100">
+                <button type="submit" class="px-6 py-2.5 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow transition-all">
+                    Change Password
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

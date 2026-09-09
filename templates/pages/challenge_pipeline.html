@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Talent Pipeline — {{ challenge.title }} | AIC Portal{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+  <div>
+    <a href="/challenges/{{ challenge.slug }}/evaluate/" class="text-sm text-brand-600 font-semibold">
+      <i class="fa-solid fa-arrow-left mr-1"></i>Evaluation
+    </a>
+    <h1 class="text-2xl font-black text-slate-900 mt-1">Talent Pipeline</h1>
+    <p class="text-slate-500 text-sm">{{ challenge.title }} | {{ total }} total participants</p>
+  </div>
+
+  <!-- Pipeline funnel -->
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+    {% for stage_key, stage_data in pipeline_data.items %}
+    <div class="bg-white rounded-2xl border {% if stage_key in 'SHORTLISTED INTERVIEW INTERNSHIP JOB_OFFER' %}border-brand-200{% else %}border-slate-200{% endif %} shadow-sm p-4 text-center">
+      <div class="text-3xl font-black {% if stage_key == 'JOB_OFFER' %}text-emerald-600{% elif stage_key in 'INTERNSHIP INTERVIEW SHORTLISTED' %}text-brand-600{% else %}text-slate-600{% endif %}">
+        {{ stage_data.count }}
+      </div>
+      <div class="text-xs font-bold text-slate-500 mt-1">{{ stage_data.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Per-stage participant lists -->
+  {% for stage_key, stage_data in pipeline_data.items %}
+  {% if stage_data.count > 0 %}
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="font-black text-slate-800 text-sm">{{ stage_data.label }} ({{ stage_data.count }})</h3>
+    </div>
+    <div class="divide-y divide-slate-100">
+      {% for part in stage_data.participants %}
+      <div class="px-5 py-3 flex items-center gap-4">
+        <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-black text-xs flex-shrink-0">
+          {{ part.student.first_name.0 }}{{ part.student.last_name.0 }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-slate-800 text-sm">{{ part.student.get_full_name }}</div>
+          <div class="text-xs text-slate-500">{{ part.student.email }}</div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          {% for next_stage, next_label in stage_choices %}
+          {% if next_stage != stage_key and next_stage not in 'REGISTERED IN_PROGRESS SUBMITTED EVALUATED REJECTED' %}
+          <button onclick="movePipeline('{{ part.id }}', '{{ next_stage }}')"
+                  class="px-3 py-1 text-[10px] font-bold rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 transition">
+            → {{ next_label }}
+          </button>
+          {% endif %}
+          {% endfor %}
+          <button onclick="movePipeline('{{ part.id }}', 'REJECTED')"
+                  class="px-3 py-1 text-[10px] font-bold rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition">
+            Reject
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+function movePipeline(participantId, stage) {
+  fetch('/api/challenges/pipeline/update/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+    body: JSON.stringify({ participant_id: participantId, stage: stage })
+  }).then(r => r.json()).then(data => {
+    if (data.success) { location.reload(); }
+    else { alert(data.error || 'Failed to update.'); }
+  });
+}
+</script>
+{% endblock %}

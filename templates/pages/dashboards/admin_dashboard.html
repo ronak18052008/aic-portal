@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block title %}System Admin Command & Multi-Role Hub | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto" x-data="{ currentRoleTab: 'students' }">
+
+    <!-- Admin Banner & Quick Command Bar -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div class="space-y-1.5 max-w-3xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-red-50 text-red-700 text-xs font-extrabold rounded-full border border-red-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-crown mr-1.5"></i>Super-Admin Central Oversight
+                    </span>
+                    <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                        Omni-Role Data Governance Active
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900">National Platform & Ecosystem Command Center</h1>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Centrally monitor statutory verification queues, cross-audit all participant roles (students, faculty, corporate partners, institutions), inspect curriculum alignment, and manage campus placement drives.
+                </p>
+            </div>
+
+            <!-- Command Quick Actions -->
+            <div class="flex items-center gap-2 flex-wrap shrink-0">
+                <a href="/admin/verification/" class="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-stamp"></i>
+                    <span>Verification Center</span>
+                </a>
+                <a href="/recruitment/campus/" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Campus Recruitment</span>
+                </a>
+                <a href="/industry/partners/" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-handshake"></i>
+                    <span>Industry Partners</span>
+                </a>
+                <a href="/skills/gap/" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    <span>Curriculum Gap</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Global Platform KPIs -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100">
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Accounts</span>
+                <span class="text-xl font-black text-slate-900">{{ total_users }}</span>
+            </div>
+            <div class="p-3.5 bg-blue-50 rounded-2xl border border-blue-200 text-center">
+                <span class="text-[10px] font-bold text-blue-700 uppercase block">Enrolled Students</span>
+                <span class="text-xl font-black text-blue-800">{{ total_students }}</span>
+            </div>
+            <div class="p-3.5 bg-purple-50 rounded-2xl border border-purple-200 text-center">
+                <span class="text-[10px] font-bold text-purple-700 uppercase block">Faculty Members</span>
+                <span class="text-xl font-black text-purple-800">{{ total_faculty }}</span>
+            </div>
+            <div class="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                <span class="text-[10px] font-bold text-amber-700 uppercase block">Corporate Recruiters</span>
+                <span class="text-xl font-black text-amber-800">{{ total_recruiters }}</span>
+            </div>
+            <div class="p-3.5 bg-indigo-50 rounded-2xl border border-indigo-200 text-center">
+                <span class="text-[10px] font-bold text-indigo-700 uppercase block">Universities / Colleges</span>
+                <span class="text-xl font-black text-indigo-800">{{ total_institutions }}</span>
+            </div>
+            <div class="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
+                <span class="text-[10px] font-bold text-emerald-700 uppercase block">Placement Records</span>
+                <span class="text-xl font-black text-emerald-800">{{ total_placements }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphical Visualizations: Platform Ecosystem Distribution & Statutory Verification -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Platform Ecosystem Roles Distribution -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-users text-brand-600"></i>
+                        Ecosystem Role Distribution
+                    </h3>
+                    <p class="text-xs text-slate-500">Active participant accounts registered across portal tiers</p>
+                </div>
+                <span class="text-xs font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200">
+                    User Analytics
+                </span>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="ecosystemRoleChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Statutory Compliance & Verification Status -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                        Statutory Verification Integrity
+                    </h3>
+                    <p class="text-xs text-slate-500">Breakdown of verified records, colleges, and corporate MoUs</p>
+                </div>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    Compliance
+                </span>
+            </div>
+            <div class="relative h-64 w-full flex items-center justify-center">
+                <canvas id="complianceDonutChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Omni-Role Data Access & Governance Explorer -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-extrabold rounded-full border border-purple-200 uppercase tracking-wide">
+                    <i class="fa-solid fa-layer-group mr-1.5"></i>Omni-Role Data Access
+                </span>
+                <h3 class="text-xl font-black text-slate-900 mt-2">Cross-Role Ecosystem Data Explorer</h3>
+                <p class="text-xs text-slate-500">Direct administrative inspection and oversight into Students, Faculty, Recruiters, and Institutions</p>
+            </div>
+
+            <!-- Role Selector Tabs -->
+            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl overflow-x-auto">
+                <button @click="currentRoleTab = 'students'"
+                        :class="currentRoleTab === 'students' ? 'bg-white text-brand-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                        class="px-3.5 py-1.5 text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-user-graduate"></i>
+                    <span>Students ({{ students_list|length }})</span>
+                </button>
+                <button @click="currentRoleTab = 'faculty'"
+                        :class="currentRoleTab === 'faculty' ? 'bg-white text-purple-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                        class="px-3.5 py-1.5 text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>Faculty ({{ faculty_list|length }})</span>
+                </button>
+                <button @click="currentRoleTab = 'industry'"
+                        :class="currentRoleTab === 'industry' ? 'bg-white text-amber-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                        class="px-3.5 py-1.5 text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Recruiters ({{ recruiters_list|length }})</span>
+                </button>
+                <button @click="currentRoleTab = 'institutions'"
+                        :class="currentRoleTab === 'institutions' ? 'bg-white text-emerald-700 shadow-sm font-black' : 'text-slate-600 font-bold hover:text-slate-900'"
+                        class="px-3.5 py-1.5 text-xs rounded-xl transition-all flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-university"></i>
+                    <span>Institutions ({{ institutions_list|length }})</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Role 1: Students Data Table -->
+        <div x-show="currentRoleTab === 'students'" class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider">
+                        <th class="pb-3 pl-2">Student Name</th>
+                        <th class="pb-3">AIC Passport</th>
+                        <th class="pb-3">Discipline / Dept</th>
+                        <th class="pb-3">Verified Skills</th>
+                        <th class="pb-3">Readiness Index</th>
+                        <th class="pb-3 pr-2 text-right">Passport View</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for st in students_list %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 pl-2">
+                            <div class="font-bold text-slate-900">{{ st.get_full_name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ st.email }}</div>
+                        </td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 font-mono text-[11px] font-bold border border-slate-200">
+                                {{ st.passport_num }}
+                            </span>
+                        </td>
+                        <td class="py-3 font-semibold text-purple-700">{{ st.department_name|default:"Computer Science & AI" }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[11px]">
+                                {{ st.skills_count }} Verified
+                            </span>
+                        </td>
+                        <td class="py-3">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-xs {% if st.readiness >= 75 %}text-emerald-600{% elif st.readiness >= 50 %}text-amber-600{% else %}text-slate-600{% endif %}">{{ st.readiness }}%</span>
+                                <div class="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div class="h-1.5 rounded-full {% if st.readiness >= 75 %}bg-emerald-500{% elif st.readiness >= 50 %}bg-amber-500{% else %}bg-slate-400{% endif %}" style="width: {{ st.readiness }}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 pr-2 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a href="/recruitment/campus/?q={{ st.get_full_name|urlencode }}" class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] rounded-lg border border-emerald-200 transition-all">
+                                    Placement ATS →
+                                </a>
+                                <a href="/passport/verify/{{ st.passport_token }}/" target="_blank" class="px-2 py-0.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-[11px] rounded-lg border border-brand-200 transition-all">
+                                    Verify →
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Role 2: Faculty / Academicians Data Table -->
+        <div x-show="currentRoleTab === 'faculty'" class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider">
+                        <th class="pb-3 pl-2">Faculty Member</th>
+                        <th class="pb-3">Institution / Affiliation</th>
+                        <th class="pb-3">Department</th>
+                        <th class="pb-3">FDP & Curriculum Tracks</th>
+                        <th class="pb-3 pr-2 text-right">Curriculum Gap</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for fac in faculty_list %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 pl-2">
+                            <div class="font-bold text-slate-900">{{ fac.get_full_name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ fac.email }}</div>
+                        </td>
+                        <td class="py-3 font-semibold text-slate-700">{{ fac.organization_name|default:"Indian Institute of Technology" }}</td>
+                        <td class="py-3 font-semibold text-purple-700">{{ fac.department_name|default:"Computer Science" }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold text-[11px]">
+                                Active FDP Participant
+                            </span>
+                        </td>
+                        <td class="py-3 pr-2 text-right">
+                            <a href="/skills/gap/" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg border border-purple-200 transition-all">
+                                Inspect Cohort →
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Role 3: Recruiters & Industry Data Table -->
+        <div x-show="currentRoleTab === 'industry'" class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider">
+                        <th class="pb-3 pl-2">Corporate Recruiter</th>
+                        <th class="pb-3">Company Organization</th>
+                        <th class="pb-3">Posted Requisitions</th>
+                        <th class="pb-3">ATS Candidate Pipeline</th>
+                        <th class="pb-3 pr-2 text-right">MoU Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for rec in recruiters_list %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 pl-2">
+                            <div class="font-bold text-slate-900">{{ rec.get_full_name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ rec.email }}</div>
+                        </td>
+                        <td class="py-3 font-bold text-brand-700">{{ rec.organization_name|default:"TechCorp Global Solutions" }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold text-[11px]">
+                                {{ rec.jobs_count }} Requisitions
+                            </span>
+                        </td>
+                        <td class="py-3 font-semibold text-slate-700">{{ rec.applicants_count }} Active Candidates</td>
+                        <td class="py-3 pr-2 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold text-[11px] rounded-lg border border-emerald-200">
+                                    MoU Certified
+                                </span>
+                                <a href="/industry/partners/?q={{ rec.organization_name|urlencode }}" class="px-2 py-0.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-[11px] rounded-lg border border-brand-200 transition-all">
+                                    Partner Profile →
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Role 4: Institutions Data Table -->
+        <div x-show="currentRoleTab === 'institutions'" class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 font-extrabold uppercase tracking-wider">
+                        <th class="pb-3 pl-2">Institution Name</th>
+                        <th class="pb-3">Type</th>
+                        <th class="pb-3">Location</th>
+                        <th class="pb-3">Accreditation (NAAC / NIRF)</th>
+                        <th class="pb-3 pr-2 text-right">UGC Recognized</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inst in institutions_list %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 pl-2">
+                            <div class="font-bold text-slate-900">{{ inst.name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ inst.official_name|default:inst.name }}</div>
+                        </td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-extrabold text-[10px] uppercase">
+                                {{ inst.get_institution_type_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 text-slate-600">{{ inst.city }}, {{ inst.state }}</td>
+                        <td class="py-3 font-semibold">
+                            <span class="text-purple-700">NAAC {{ inst.naac_grade|default:"A+" }}</span>
+                            {% if inst.nirf_rank %}
+                            <span class="text-slate-300 mx-1">•</span>
+                            <span class="text-emerald-600 font-bold">NIRF #{{ inst.nirf_rank }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 pr-2 text-right">
+                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold text-[11px] rounded-lg border border-emerald-200 inline-flex items-center gap-1">
+                                <i class="fa-solid fa-shield-halved text-[9px]"></i>UGC
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Ecosystem Role Chart
+    const roleCtx = document.getElementById('ecosystemRoleChart');
+    if (roleCtx) {
+        new Chart(roleCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Students', 'Faculty', 'Industry Recruiters', 'Institutions'],
+                datasets: [{
+                    label: 'Registered Accounts',
+                    data: [{{ total_students }}, {{ total_faculty }}, {{ total_recruiters }}, {{ total_institutions }}],
+                    backgroundColor: ['#0284c7', '#8b5cf6', '#f59e0b', '#10b981'],
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 10 } },
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                    },
+                    x: { ticks: { font: { size: 10, weight: 'bold' } }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // 2. Compliance Donut Chart
+    const compCtx = document.getElementById('complianceDonutChart');
+    if (compCtx) {
+        new Chart(compCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Verified Sources', 'UGC Colleges', 'Corporate MoUs', 'Pending Audit'],
+                datasets: [{
+                    data: [{{ total_sources }}, {{ total_institutions }}, 14, 6],
+                    backgroundColor: ['#10b981', '#0284c7', '#8b5cf6', '#f59e0b'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } }
+                    }
+                },
+                cutout: '62%'
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

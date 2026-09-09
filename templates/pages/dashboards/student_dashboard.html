@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-7xl mx-auto">
+    
+    <!-- Welcome Header & Passport Widget -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-2 text-center md:text-left">
+            <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-200">STUDENT DASHBOARD</span>
+            <h2 class="text-2xl md:text-3xl font-black text-slate-900">Welcome back, {{ user.first_name }}!</h2>
+            <p class="text-xs text-slate-500">Track your skill readiness, course progress, and job applications.</p>
+        </div>
+
+        {% if passport %}
+        <div class="bg-gradient-to-br from-brand-900 to-brand-700 text-white p-5 rounded-2xl shadow-lg border border-brand-500 space-y-3 w-full md:w-80">
+            <div class="flex justify-between items-center">
+                <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-400">AIC Passport</span>
+                <i class="fa-solid fa-qrcode text-lg text-white/80"></i>
+            </div>
+            <div>
+                <p class="text-xs font-mono font-bold text-white">{{ passport.passport_number }}</p>
+                <p class="text-[10px] text-slate-300">Verified QR Record Token</p>
+            </div>
+            <a href="/passport/" class="block text-center text-xs font-bold bg-white/20 hover:bg-white/30 text-white py-1.5 rounded-lg backdrop-blur-sm transition-all">
+                View Official Passport →
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Verified Skills</span>
+            <p class="text-2xl font-black text-slate-900">{{ user_skills.count }}</p>
+            <a href="/skills/" class="text-[11px] font-bold text-brand-600 hover:underline">Manage Skills →</a>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Active Applications</span>
+            <p class="text-2xl font-black text-slate-900">{{ applications.count }}</p>
+            <a href="/applications/" class="text-[11px] font-bold text-brand-600 hover:underline">Track Status →</a>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">Skill Gap Readiness</span>
+            <p class="text-2xl font-black text-emerald-600">85%</p>
+            <a href="/skills/gap/" class="text-[11px] font-bold text-brand-600 hover:underline">View Target Gap →</a>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-slate-400 uppercase">AI Recommendations</span>
+            <p class="text-2xl font-black text-brand-600">6 New</p>
+            <a href="/search/" class="text-[11px] font-bold text-brand-600 hover:underline">Browse Matches →</a>
+        </div>
+    </div>
+
+    <!-- Skill Gap Engine Recommendation Banner -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="space-y-1 text-center sm:text-left">
+            <h4 class="font-extrabold text-amber-900 text-sm"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-amber-600"></i>AI Skill Gap Recommendation</h4>
+            <p class="text-xs text-amber-800">You are missing <strong>Network Security</strong> for target role <em>AI Backend Systems Engineer</em>.</p>
+        </div>
+        <a href="/skills/gap/?role=AI+Backend+Systems+Engineer" class="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow">
+            Run Skill Gap Analysis
+        </a>
+    </div>
+
+    <!-- Recommended Opportunities & Courses Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Recommended Jobs -->
+        <div class="space-y-4">
+            <h3 class="text-base font-black text-slate-900">Recommended Recruitment Opportunities</h3>
+            <div class="space-y-3">
+                {% for job in recommended_jobs %}
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-brand-300 shadow-sm flex items-start justify-between">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-emerald-100 text-emerald-800 uppercase">{{ job.get_opportunity_type_display }}</span>
+                        <h4 class="font-bold text-sm text-slate-900">{{ job.title }}</h4>
+                        <p class="text-xs text-slate-500">{{ job.organization_name }} • {{ job.city }}</p>
+                    </div>
+                    <a href="/opportunities/{{ job.id }}/apply/" class="shrink-0 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                        Apply
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recommended Courses -->
+        <div class="space-y-4">
+            <h3 class="text-base font-black text-slate-900">Recommended Skill Courses</h3>
+            <div class="space-y-3">
+                {% for course in recommended_courses %}
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-brand-300 shadow-sm flex items-start justify-between">
+                    <div class="space-y-1">
+                        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-sky-100 text-sky-800 uppercase">{{ course.provider }}</span>
+                        <h4 class="font-bold text-sm text-slate-900">{{ course.title }}</h4>
+                        <p class="text-xs text-slate-500">{{ course.level_name }} • {{ course.duration_hours }} Hours</p>
+                    </div>
+                    <a href="{{ course.official_url }}" target="_blank" class="shrink-0 bg-slate-100 text-slate-700 hover:text-brand-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">
+                        Enroll
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

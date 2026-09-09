@@ -1,0 +1,723 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if is_faculty_view %}Student Cohort Skill Gap & Curriculum Analytics | AIC PORTAL{% else %}AI Skill Gap & Career Target Analysis | AIC PORTAL{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+
+    {% if is_faculty_view %}
+    <!-- ========================================================================= -->
+    <!-- ACADEMICIAN / FACULTY VIEW: Institutional Student Cohort Skill Gap Engine -->
+    <!-- ========================================================================= -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-extrabold rounded-full border border-purple-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-graduation-cap mr-1.5"></i>
+                        {% if is_admin_or_institution %}Institutional Oversight & Curriculum Intelligence{% else %}Academician Curriculum Intelligence{% endif %}
+                    </span>
+                    <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                        Student Cohort & Industry Demand Analytics
+                    </span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Curriculum Industry Gap & Student Cohort Data</h2>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Comprehensive macro-analysis of enrolled students across all disciplines. Inspect verified competencies, curriculum deficits against real-time market demands, and individual student progress towards career roles.
+                </p>
+            </div>
+            
+            <!-- Cohort Key Metrics -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:flex lg:flex-col gap-3 shrink-0 self-start lg:w-52">
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-center">
+                    <span class="text-xs font-extrabold uppercase text-emerald-800 block">Enrolled Cohort</span>
+                    <span class="text-3xl font-black text-emerald-700">{{ total_students_cohort }}</span>
+                    <span class="text-xs font-semibold text-emerald-800 block mt-0.5">{{ total_verified_credentials }} Verified Credentials</span>
+                </div>
+                
+                <div class="bg-purple-50 border border-purple-200 p-4 rounded-2xl text-center">
+                    <span class="text-xs font-extrabold uppercase text-purple-800 block">Cohort Avg Score</span>
+                    <span class="text-3xl font-black text-purple-700">{{ avg_cohort_score }}%</span>
+                    <span class="text-xs font-semibold text-purple-800 block mt-0.5">Adaptive Benchmarks</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphical Visual Analytics: Industry Demand Deficits & Career Readiness Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Chart 1: Industry Demand vs Cohort Coverage -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-brand-600"></i>
+                        Market Demand vs Cohort Skill Coverage
+                    </h3>
+                    <p class="text-xs text-slate-500">Comparing industry demand score with student completion rate (%)</p>
+                </div>
+                <span class="text-xs font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200">
+                    <i class="fa-solid fa-chart-simple mr-1"></i>Macro Graph
+                </span>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="skillDeficitChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Career Readiness Distribution -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-sm text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-purple-600"></i>
+                        Career Readiness Tiers
+                    </h3>
+                    <p class="text-xs text-slate-500">Student cohort alignment with industry target roles</p>
+                </div>
+                <span class="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                    Cohort Fit
+                </span>
+            </div>
+            <div class="relative h-64 w-full flex items-center justify-center">
+                <canvas id="readinessPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Macro Student Cohort Breakdown: Strong Competencies vs Critical Deficits -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Cohort's Strongest Acquired Skills -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-users-viewfinder text-emerald-600"></i>
+                    Student Cohort Strong Competencies
+                </h3>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">COMMONLY ACQUIRED</span>
+            </div>
+            <p class="text-xs text-slate-500">Skills with highest student completion rates and verified assessment evidence.</p>
+            
+            <div class="space-y-2.5">
+                {% for ts in top_cohort_skills %}
+                <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-bold text-emerald-950 block text-sm">{{ ts.skill__name }}</span>
+                        <span class="text-[11px] text-emerald-700 font-semibold">{{ ts.skill__field__name|default:ts.skill__category }}</span>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="text-xs font-black bg-emerald-200 text-emerald-900 px-2.5 py-1 rounded-lg uppercase block">
+                            {{ ts.student_count }} Students
+                        </span>
+                        <span class="text-[10px] text-emerald-700 font-bold mt-0.5 block">{{ ts.avg_score|floatformat:1 }}% Avg Score</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400 text-center py-4">No student skill records available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Critical Institutional Skill Deficits -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                    Critical Curriculum Skill Deficits
+                </h3>
+                <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">URGENT GAP</span>
+            </div>
+            <p class="text-xs text-slate-500">High-demand industry competencies that less than 50% of students have mastered.</p>
+            
+            <div class="space-y-2.5">
+                {% for ds in deficit_skills %}
+                <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-bold text-amber-950 block text-sm">{{ ds.skill.name }}</span>
+                        <span class="text-[11px] text-amber-700 font-semibold">Demand Score: {{ ds.demand_score }}/100 • {{ ds.skill.category }}</span>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="text-xs font-black bg-amber-200 text-amber-900 px-2.5 py-1 rounded-lg uppercase block">
+                            {{ ds.deficit_rate }}% Deficit
+                        </span>
+                        <span class="text-[10px] text-amber-700 font-bold mt-0.5 block">Acquired by only {{ ds.acquired_by }} students</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-emerald-600 text-center py-4">No critical deficits detected. Cohort is well aligned with industry demands.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recommended Faculty Development Programmes to Bridge Student Gap -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+            <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-extrabold rounded-full border border-brand-200 uppercase tracking-wide">
+                <i class="fa-solid fa-chalkboard-user mr-1.5"></i>Pedagogical Intervention & Up-skilling
+            </span>
+            <h3 class="text-xl font-black text-slate-900 mt-2">Recommended Faculty Development Programmes (FDP)</h3>
+            <p class="text-xs text-slate-500">Curated national FDPs to equip academicians with hands-on expertise to introduce these deficit skills into college syllabi.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for c in recommended_fdp_courses %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-brand-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="px-2 py-0.5 text-xs font-extrabold rounded bg-purple-100 text-purple-800">{{ c.provider }}</span>
+                        <span class="font-bold text-emerald-600 text-xs"><i class="fa-solid fa-shield-halved mr-1"></i>FDP</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900 mt-1 line-clamp-2">{{ c.title }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ c.description }}</p>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700">{{ c.duration_hours }} Hours</span>
+                    <a href="{{ c.official_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow transition-all">
+                        View FDP →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- STUDENT COHORT CURRICULUM SKILL GAP LIST & CLICK-TO-RENDER DETAIL         -->
+    <!-- ========================================================================= -->
+    <div x-data="facultyCohortViewer()" class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-extrabold rounded-full border border-blue-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-users-rectangle mr-1.5"></i>Curriculum Student Tracking
+                    </span>
+                    <span class="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-full border border-slate-200">
+                        {{ student_gap_list|length }} Students Enrolled
+                    </span>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 mt-2">Student Cohort Skill Gap Directory</h3>
+                <p class="text-xs text-slate-500">Click any student row to immediately inspect their live skill gap metrics, matched competencies, and missing requirements.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="text" x-model="searchQuery" placeholder="Filter by student name or role..." class="px-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 w-full md:w-64">
+            </div>
+        </div>
+
+        <!-- Two Column Layout: Student List (Left) + Selected Student Live Gap Analysis (Right) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Student Table / List (7 cols) -->
+            <div class="lg:col-span-6 space-y-3">
+                <div class="text-xs font-extrabold text-slate-400 uppercase tracking-wider px-2">Select Student</div>
+                <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                    <template x-for="st in filteredStudents" :key="st.id">
+                        <div @click="selectStudent(st)"
+                             :class="selectedStudent && selectedStudent.id === st.id ? 'border-brand-500 bg-brand-50/40 shadow-sm' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'"
+                             class="p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-sm"
+                                     x-text="st.name.charAt(0).toUpperCase()">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-sm text-slate-900 truncate" x-text="st.name"></h4>
+                                    <p class="text-xs text-slate-500 truncate" x-text="st.target_role"></p>
+                                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                                        <span class="text-[10px] font-mono font-bold text-brand-700 bg-brand-50 border border-brand-200 px-1.5 py-0.5 rounded" x-text="st.passport_number"></span>
+                                        <span class="text-[11px] font-bold text-slate-500" x-text="st.verified_count + ' skills'"></span>
+                                        <span class="text-slate-300">•</span>
+                                        <span class="text-[11px] font-bold text-purple-600" x-text="st.department"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="flex items-center gap-1.5 justify-end">
+                                    <span class="text-xs font-black"
+                                          :class="st.match_pct >= 60 ? 'text-emerald-600' : (st.match_pct >= 40 ? 'text-amber-600' : 'text-rose-600')"
+                                          x-text="st.match_pct + '% Match'"></span>
+                                </div>
+                                <div class="w-20 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                                    <div class="h-1.5 rounded-full"
+                                         :class="st.match_pct >= 60 ? 'bg-emerald-500' : (st.match_pct >= 40 ? 'bg-amber-500' : 'bg-rose-500')"
+                                         :style="'width: ' + st.match_pct + '%'"></div>
+                                </div>
+                                <span class="text-[10px] text-slate-400 mt-1 block">Click to view gap →</span>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="filteredStudents.length === 0" class="p-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                        No students match the search filter.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Student Skill Gap Card (Right - 6 cols) -->
+            <div class="lg:col-span-6 sticky top-24">
+                <template x-if="selectedStudent">
+                    <div class="bg-slate-50 border-2 border-brand-200 rounded-3xl p-6 space-y-5 shadow-sm">
+                        <!-- Student Header Banner -->
+                        <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center text-white font-black text-lg shadow-md"
+                                     x-text="selectedStudent.name.charAt(0).toUpperCase()">
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-black text-slate-900" x-text="selectedStudent.name"></h3>
+                                    <p class="text-xs text-slate-500" x-text="selectedStudent.email"></p>
+                                    <span class="inline-block mt-1 px-2.5 py-0.5 text-[11px] font-extrabold rounded-md bg-brand-100 text-brand-800"
+                                          x-text="'Target: ' + selectedStudent.target_role"></span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-extrabold uppercase text-slate-400 block">Gap Score</span>
+                                <span class="text-2xl font-black"
+                                      :class="selectedStudent.gap_pct > 50 ? 'text-rose-600' : 'text-emerald-600'"
+                                      x-text="selectedStudent.gap_pct + '%'"></span>
+                                <span class="text-[10px] font-bold text-slate-500 block">Skill Deficit</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar & Readiness -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-slate-700">Role Competency Readiness</span>
+                                <span class="font-black text-brand-700" x-text="selectedStudent.match_pct + '% Match (' + selectedStudent.matched_skills.length + '/' + (selectedStudent.matched_skills.length + selectedStudent.missing_skills.length) + ' Skills)'"></span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                                <div class="h-2.5 rounded-full transition-all duration-500"
+                                     :class="selectedStudent.match_pct >= 60 ? 'bg-emerald-500' : (selectedStudent.match_pct >= 40 ? 'bg-amber-500' : 'bg-rose-500')"
+                                     :style="'width: ' + selectedStudent.match_pct + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Matched Skills (Verified) -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                Verified Present Skills
+                                <span class="text-[10px] px-2 py-0.2 bg-emerald-100 text-emerald-800 rounded-full font-bold" x-text="selectedStudent.matched_skills.length"></span>
+                            </h4>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="skill in selectedStudent.matched_skills" :key="skill">
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                        <i class="fa-solid fa-check text-[10px]"></i>
+                                        <span x-text="skill"></span>
+                                    </span>
+                                </template>
+                                <template x-if="selectedStudent.matched_skills.length === 0">
+                                    <p class="text-xs text-slate-400 italic">No target role competencies verified yet.</p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Missing Skills (Gaps to Bridge) -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                                Missing Skills (Curriculum Gap)
+                                <span class="text-[10px] px-2 py-0.2 bg-rose-100 text-rose-800 rounded-full font-bold" x-text="selectedStudent.missing_skills.length"></span>
+                            </h4>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="skill in selectedStudent.missing_skills" :key="skill">
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-50 text-rose-800 border border-rose-200 flex items-center gap-1">
+                                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                                        <span x-text="skill"></span>
+                                    </span>
+                                </template>
+                                <template x-if="selectedStudent.missing_skills.length === 0">
+                                    <p class="text-xs text-emerald-600 font-bold">Student has acquired 100% of required competencies!</p>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Recommended Academic Intervention -->
+                        <div class="p-4 bg-white border border-slate-200 rounded-2xl space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-extrabold uppercase text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                    <i class="fa-solid fa-lightbulb mr-1"></i>Curriculum Recommendation
+                                </span>
+                                <span class="text-xs text-slate-400" x-text="selectedStudent.rec_course_provider"></span>
+                            </div>
+                            <h5 class="text-sm font-bold text-slate-900" x-text="selectedStudent.rec_course_title"></h5>
+                            <p class="text-xs text-slate-500">Assign this module to close the student's current skill deficit for their desired industry role.</p>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!selectedStudent">
+                    <div class="p-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">
+                        <i class="fa-solid fa-user-graduate text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-xs font-bold">Select a student from the list to inspect their individual skill gap profile.</p>
+                    </div>
+                </template>
+            </div>
+
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ========================================================================= -->
+    <!-- STUDENT VIEW: Personal Career Role Skill Gap Analysis                     -->
+    <!-- ========================================================================= -->
+    <!-- Header & Career Target Selector -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-amber-50 text-amber-700 text-xs font-extrabold rounded-full border border-amber-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-brain mr-1.5"></i>Skill Intelligence Engine
+                    </span>
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
+                        {{ current_role_info.field_name }}
+                    </span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Target Career Role: {{ target_role }}</h2>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    AI-powered comparison of your verified present skills against industry benchmarks across all 20 professional disciplines. Recommendations are strictly focused on your current skills and desired target role competencies.
+                </p>
+                
+                <!-- Dual Field and Role Cascading Selector -->
+                <form action="/skills/gap/" method="GET" class="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1.5">1. Academic Discipline / Field:</label>
+                        <select name="field" onchange="this.form.submit()" class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                            {% for fslug, fdata in all_roles_by_field.items %}
+                            <option value="{{ fslug }}" {% if field_slug == fslug %}selected{% endif %}>{{ fdata.field_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1.5">2. Target Career Role:</label>
+                        <select name="role" onchange="this.form.submit()" class="w-full px-3.5 py-2 text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white text-slate-800">
+                            {% for fslug, fdata in all_roles_by_field.items %}
+                                {% if fslug == field_slug %}
+                                    {% for r in fdata.roles %}
+                                    <option value="{{ r }}" {% if target_role == r %}selected{% endif %}>{{ r }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Dynamic Career Readiness & Gap Gauge -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:flex lg:flex-col gap-3 shrink-0 self-start lg:w-48">
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-center">
+                    <span class="text-xs font-extrabold uppercase text-emerald-800 block">Career Readiness</span>
+                    <span class="text-3xl font-black text-emerald-700">{{ match_percentage }}%</span>
+                    <span class="text-xs font-semibold text-emerald-800 block mt-0.5">{{ matched_count }} of {{ total_required }} skills acquired</span>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-center">
+                    <span class="text-xs font-extrabold uppercase text-amber-800 block">Career Skill Gap</span>
+                    <span class="text-3xl font-black text-amber-700">{{ gap_percentage }}%</span>
+                    <span class="text-xs font-semibold text-amber-800 block mt-0.5">{{ missing_count }} skill{{ missing_count|pluralize }} remaining</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="space-y-1.5 pt-2 border-t border-slate-100">
+            <div class="flex justify-between items-center text-xs font-bold">
+                <span class="text-slate-600">Role Competency Progress</span>
+                <span class="text-brand-700">{{ match_percentage }}% Complete</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                <div class="bg-gradient-to-r from-brand-500 to-emerald-500 h-3 rounded-full transition-all duration-500" style="width: {{ match_percentage }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Present Skills vs Desired Skills Breakdown -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Present & Matched Skills -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    Present Verified Skills ({{ matched_count }})
+                </h3>
+                <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">MATCHED</span>
+            </div>
+            <p class="text-xs text-slate-500">Skills you currently possess that directly satisfy this career target.</p>
+            <div class="space-y-2">
+                {% for s in matched_skills %}
+                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs font-bold text-emerald-950">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-check-double text-emerald-600"></i>
+                        {{ s.name }}
+                    </span>
+                    <span class="text-xs font-extrabold bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-lg uppercase">ACQUIRED</span>
+                </div>
+                {% empty %}
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                    No skills in your current profile match this role yet. Acquire the missing skills below to start bridging the gap!
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Missing & Desired Skills -->
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-extrabold text-sm text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                    Desired Skills Needed ({{ missing_count }})
+                </h3>
+                <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">SKILL GAP</span>
+            </div>
+            <p class="text-xs text-slate-500">Essential industry capabilities required for {{ target_role }} not yet in your profile.</p>
+            <div class="space-y-2">
+                {% for s in missing_skills %}
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex justify-between items-center text-xs font-bold text-amber-950">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-amber-600"></i>
+                        {{ s.name }}
+                    </span>
+                    <span class="text-xs font-extrabold bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-lg uppercase">DESIRED</span>
+                </div>
+                {% empty %}
+                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs text-emerald-800 font-bold">
+                    <i class="fa-solid fa-trophy mr-1 text-amber-500"></i> Outstanding! You meet 100% of the core skills for {{ target_role }}.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Targeted Recommendations Based Strictly On Present & Desired Skills -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+            <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-extrabold rounded-full border border-brand-200 uppercase tracking-wide">
+                <i class="fa-solid fa-bullseye mr-1.5"></i>Personalized Learning Pathways
+            </span>
+            <h3 class="text-xl font-black text-slate-900 mt-2">Recommended Courses to Bridge Desired Skills</h3>
+            <p class="text-xs text-slate-500">Curated specifically to acquire missing skills for {{ target_role }}.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for c in recommended_courses %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-brand-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="px-2 py-0.5 text-xs font-extrabold rounded bg-sky-100 text-sky-800">{{ c.provider }}</span>
+                        <span class="font-bold text-amber-500 text-xs"><i class="fa-solid fa-star mr-1"></i>{{ c.rating|default:"4.8" }}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900 mt-1 line-clamp-2">{{ c.title }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ c.description }}</p>
+                </div>
+                <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700">{% if c.price > 0 %}₹{{ c.price }}{% else %}Free{% endif %}</span>
+                    <a href="{{ c.official_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow transition-all">
+                        Enroll Now →
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-xs text-slate-400 col-span-4 text-center py-4">No specific courses found for this discipline.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Targeted Certifications for Desired Skills -->
+    {% if recommended_certifications %}
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div>
+            <h3 class="text-xl font-black text-slate-900"><i class="fa-solid fa-certificate text-brand-600 mr-2"></i>Industry Certifications Validating Desired Skills</h3>
+            <p class="text-xs text-slate-500">Accelerate your hireability by completing these industry-verified credentials.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for cert in recommended_certifications %}
+            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-brand-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="px-2 py-0.5 rounded font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs uppercase">{{ cert.issuing_organization }}</span>
+                        <span class="font-mono text-xs font-bold text-slate-600">{{ cert.credential_code|default:"PRO" }}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900">{{ cert.title }}</h4>
+                    <p class="text-xs text-slate-500 line-clamp-2">{{ cert.description }}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold text-emerald-600">{% if cert.cost > 0 %}₹{{ cert.cost|floatformat:0 }}{% else %}Free{% endif %}</span>
+                    <a href="{{ cert.official_verify_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition-all">
+                        View Exam →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Real Recruitment Matches for Target Role -->
+    {% if relevant_opportunities %}
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+            <div>
+                <h3 class="text-xl font-black text-slate-900"><i class="fa-solid fa-briefcase text-brand-600 mr-2"></i>Active Opportunities Matching This Career Target</h3>
+                <p class="text-xs text-slate-500">Live positions open right now in {{ current_role_info.field_name }}.</p>
+            </div>
+            <a href="/search/?type=jobs&field={{ field_slug }}" class="text-xs font-bold text-brand-600 hover:underline">View All Opportunities in {{ current_role_info.field_name }} →</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for opp in relevant_opportunities %}
+            <div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 flex flex-col justify-between hover:border-brand-400 hover:bg-white transition-all shadow-sm">
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="px-2 py-0.5 rounded font-extrabold bg-emerald-100 text-emerald-800 text-xs uppercase">{{ opp.get_opportunity_type_display }}</span>
+                        <span class="text-xs font-bold text-slate-500">{{ opp.city }}, {{ opp.country }}</span>
+                    </div>
+                    <h4 class="font-bold text-sm text-slate-900">{{ opp.title }}</h4>
+                    <p class="text-xs font-semibold text-slate-600"><i class="fa-solid fa-building mr-1 text-brand-500"></i>{{ opp.organization_name }}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-black text-brand-900">₹{{ opp.stipend_salary|floatformat:0 }} {{ opp.salary_period }}</span>
+                    <a href="/opportunities/{{ opp.id }}/apply/" class="px-3.5 py-1.5 text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow transition-all">
+                        Apply Now →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% if is_faculty_view %}
+<script>
+function facultyCohortViewer() {
+    return {
+        studentsData: JSON.parse('{{ students_json_str|escapejs }}'),
+        searchQuery: '',
+        selectedStudent: null,
+        init: function() {
+            if (this.studentsData && this.studentsData.length > 0) {
+                this.selectedStudent = this.studentsData[0];
+            }
+        },
+        get filteredStudents() {
+            var q = this.searchQuery.toLowerCase().trim();
+            if (!q) {
+                return this.studentsData;
+            }
+            return this.studentsData.filter(function(st) {
+                return st.name.toLowerCase().indexOf(q) !== -1 ||
+                       st.target_role.toLowerCase().indexOf(q) !== -1 ||
+                       st.field_label.toLowerCase().indexOf(q) !== -1 ||
+                       st.email.toLowerCase().indexOf(q) !== -1;
+            });
+        },
+        selectStudent: function(student) {
+            this.selectedStudent = student;
+        }
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Skill Deficit vs Industry Demand Bar Chart
+    const deficitCtx = document.getElementById('skillDeficitChart');
+    if (deficitCtx) {
+        const labels = JSON.parse('{{ chart_deficit_labels|escapejs }}');
+        const demand = JSON.parse('{{ chart_deficit_demand|escapejs }}');
+        const coverage = JSON.parse('{{ chart_cohort_coverage|escapejs }}');
+
+        new Chart(deficitCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Industry Market Demand (/100)',
+                        data: demand,
+                        backgroundColor: 'rgba(2, 132, 199, 0.85)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Cohort Skill Coverage (%)',
+                        data: coverage,
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { font: { size: 10 } },
+                        grid: { color: 'rgba(226, 232, 240, 0.6)' }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 10 },
+                            callback: function(value) {
+                                const label = this.getLabelForValue(value);
+                                return label.length > 14 ? label.substr(0, 12) + '…' : label;
+                            }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Career Readiness Tiers Doughnut Chart
+    const readinessCtx = document.getElementById('readinessPieChart');
+    if (readinessCtx) {
+        const counts = JSON.parse('{{ chart_readiness_counts|escapejs }}');
+        new Chart(readinessCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['High Fit (≥70%)', 'Moderate (40-69%)', 'Urgent Gap (<40%)'],
+                datasets: [{
+                    data: counts,
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+
+{% endblock %}

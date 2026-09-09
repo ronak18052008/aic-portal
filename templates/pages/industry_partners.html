@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Industry Collaboration Partners | AIC PORTAL{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- Header & Stats -->
+    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="space-y-1.5 max-w-3xl">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-extrabold rounded-full border border-brand-200 uppercase tracking-wide">
+                        <i class="fa-solid fa-handshake mr-1.5"></i>Academia-Industry Collaboration Hub
+                    </span>
+                    <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                        {{ total_partners }} Active Corporate MoUs
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900">Institutional Industry Partners</h1>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Official directory of enterprise companies and industry leaders actively collaborating with member universities and colleges. View active bilateral MoUs, sponsored research laboratories, campus placement drives, and co-designed curricula.
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="/opportunities/create/" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>Post New Requisition
+                </a>
+            </div>
+        </div>
+
+        <!-- Partnership KPIs -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                <span class="text-xs font-bold text-slate-400 uppercase block">Collaborating Industries</span>
+                <span class="text-2xl font-black text-slate-900">{{ total_partners }}</span>
+            </div>
+            <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center">
+                <span class="text-xs font-bold text-emerald-800 uppercase block">Active MoUs</span>
+                <span class="text-2xl font-black text-emerald-700">{{ active_mou_count }}</span>
+            </div>
+            <div class="p-4 bg-purple-50 rounded-2xl border border-purple-200 text-center">
+                <span class="text-xs font-bold text-purple-800 uppercase block">Joint R&D Labs</span>
+                <span class="text-2xl font-black text-purple-700">{{ joint_labs_count }}</span>
+            </div>
+            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                <span class="text-xs font-bold text-amber-800 uppercase block">Live Requisitions</span>
+                <span class="text-2xl font-black text-amber-700">{{ total_live_jobs }}+</span>
+            </div>
+        </div>
+
+        {% if is_admin %}
+        <!-- Confidential Admin Statutory Intelligence Ribbon (VISIBLE ONLY IN ADMIN ROLE) -->
+        <div class="p-4 bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-2xl space-y-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white rounded-md flex items-center gap-1">
+                        <i class="fa-solid fa-crown text-[8px]"></i>Admin Sovereign Governance
+                    </span>
+                    <span class="text-xs font-black text-red-950">Statutory Partner Audit & CSR Financials</span>
+                </div>
+                <span class="text-[11px] font-mono font-bold text-red-700">Audit Protocol: ISO/IEC 27001 & AICTE-MOU-V4</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Total R&D Endowments</span>
+                    <span class="text-base font-black text-slate-900">₹45.90 Crores</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Statutory Clearance</span>
+                    <span class="text-base font-black text-emerald-700">100% Verified</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">Supernumerary Reserved</span>
+                    <span class="text-base font-black text-purple-700">620 Placement PPOs</span>
+                </div>
+                <div class="bg-white/80 p-2.5 rounded-xl border border-red-100">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase block">CSR Compliance Code</span>
+                    <span class="text-base font-black text-amber-700">CSR-NAT-2026</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <form method="GET" action="/industry/partners/" class="flex-1 flex flex-wrap items-center gap-3 w-full">
+            <div class="flex-1 min-w-[220px]">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Search company, tech domain, or institute..." class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500">
+                </div>
+            </div>
+
+            <!-- Sector Filter -->
+            <select name="sector" onchange="this.form.submit()" class="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                <option value="">All Industry Sectors</option>
+                {% for s in sectors %}
+                <option value="{{ s }}" {% if sector_filter == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Tier Filter -->
+            <select name="tier" onchange="this.form.submit()" class="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                <option value="">All Partner Tiers</option>
+                {% for t in tiers %}
+                <option value="{{ t }}" {% if tier_filter == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Collaboration Type Filter -->
+            <select name="collab_type" onchange="this.form.submit()" class="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                <option value="">All Collaboration Types</option>
+                {% for ct in collab_types %}
+                <option value="{{ ct }}" {% if collab_filter == ct %}selected{% endif %}>{{ ct }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition-all">
+                Filter
+            </button>
+            {% if query or sector_filter or tier_filter or collab_filter %}
+            <a href="/industry/partners/" class="text-xs font-bold text-slate-400 hover:text-brand-600">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Corporate Partners Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for p in partners %}
+        <div class="bg-white rounded-3xl border border-slate-200 hover:border-brand-300 shadow-sm hover:shadow-md transition-all p-6 flex flex-col justify-between space-y-4">
+            
+            <div class="space-y-3.5">
+                <!-- Top Badge & Tier -->
+                <div class="flex items-center justify-between gap-2">
+                    <span class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-md uppercase tracking-wider
+                        {% if 'Platinum' in p.tier %}bg-purple-100 text-purple-800 border border-purple-200
+                        {% elif 'Diamond' in p.tier %}bg-sky-100 text-sky-800 border border-sky-200
+                        {% else %}bg-amber-100 text-amber-800 border border-amber-200{% endif %}">
+                        <i class="fa-solid fa-award mr-1"></i>{{ p.tier }}
+                    </span>
+                    <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check text-[9px]"></i>MoU Valid: {{ p.mou_validity }}
+                    </span>
+                </div>
+
+                <!-- Company Title & Sector -->
+                <div class="flex items-start gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-700 to-slate-900 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm">
+                        {{ p.name|slice:":1" }}
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-900 leading-tight">{{ p.name }}</h3>
+                        <p class="text-xs text-brand-600 font-bold mt-0.5">{{ p.sector }}</p>
+                        <p class="text-[11px] text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i>{{ p.location }}</p>
+                    </div>
+                </div>
+
+                <!-- Collaboration Details -->
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-500">Collab Model:</span>
+                        <span class="font-bold text-slate-900 text-right">{{ p.collab_type }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-500">Partnered Campus:</span>
+                        <span class="font-bold text-brand-700 text-right">{{ p.partnered_institute }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="font-bold text-slate-500">Liaison Officer:</span>
+                        <span class="font-medium text-slate-700 text-right">{{ p.liaison }}</span>
+                    </div>
+                </div>
+
+                <!-- Technologies & Domains -->
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Key Skill Focus</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for sk in p.tech_stack %}
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-700 rounded-md border border-slate-200">{{ sk }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Scope Excerpt -->
+                <p class="text-xs text-slate-600 leading-relaxed">{{ p.scope_summary }}</p>
+
+                <!-- Confidential Admin Intelligence (VISIBLE ONLY IN ADMIN ROLE) -->
+                {% if is_admin and p.admin_metadata %}
+                <div class="p-3 bg-red-50/80 border border-red-200 rounded-2xl space-y-2 mt-2">
+                    <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white rounded-md flex items-center gap-1">
+                            <i class="fa-solid fa-lock text-[8px]"></i>Admin Only
+                        </span>
+                        <span class="text-[10px] font-bold text-red-700 font-mono">{{ p.admin_metadata.statutory_compliance_id }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                        <div>
+                            <span class="text-slate-400 font-bold block text-[10px] uppercase">R&D Endowment</span>
+                            <span class="font-extrabold text-slate-900">{{ p.admin_metadata.grant_funding }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block text-[10px] uppercase">Compliance Audit</span>
+                            <span class="font-extrabold text-emerald-700">{{ p.admin_metadata.audit_rating }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block text-[10px] uppercase">CSR Grant Code</span>
+                            <span class="font-mono text-slate-700 text-[10px]">{{ p.admin_metadata.csr_fund_code }}</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 font-bold block text-[10px] uppercase">Hiring Quota</span>
+                            <span class="font-bold text-purple-700">{{ p.admin_metadata.hiring_quota }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <a href="/search/?type=jobs&q={{ p.name|urlencode }}" class="font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>{{ p.active_requisitions_count }} Open Roles</span>
+                </a>
+                
+                <a href="{{ p.careers_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all flex items-center gap-1">
+                    <span>Careers</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="col-span-3 bg-white p-12 rounded-3xl border border-slate-200 text-center text-slate-500 space-y-3">
+            <i class="fa-solid fa-handshake-slash text-4xl text-slate-300"></i>
+            <h4 class="text-base font-bold text-slate-800">No industry partners found matching criteria</h4>
+            <p class="text-xs text-slate-400">Try broadening your search or clearing sector and tier filters.</p>
+            <a href="/industry/partners/" class="inline-block px-4 py-2 bg-brand-600 text-white font-bold text-xs rounded-xl shadow">Reset Filters</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
